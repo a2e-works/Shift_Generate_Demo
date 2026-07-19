@@ -1,0 +1,38 @@
+{
+  "受変電設備": {
+    "stage_order": ["見学", "補助", "単独", "教育担当補助", "教育担当"],
+    "transitions": [
+      {"from": "見学", "to": "補助", "required_counts": {"見学": 3}},
+      {"from": "補助", "to": "単独", "required_counts": {"補助": 5, "停電試験": 2}},
+      {"from": "単独", "to": "教育担当補助", "required_counts": {"単独対応": 10}, "min_experience_months": 24},
+      {"from": "教育担当補助", "to": "教育担当", "required_counts": {"教育担当補助": 5}, "min_experience_months": 36}
+    ]
+  },
+  "空調設備": {
+    "stage_order": ["見学", "補助", "単独", "教育担当補助", "教育担当"],
+    "transitions": [
+      {"from": "見学", "to": "補助", "required_counts": {"見学": 3}},
+      {"from": "補助", "to": "単独", "required_counts": {"補助": 5, "法定点検": 3}},
+      {"from": "単独", "to": "教育担当補助", "required_counts": {"単独対応": 8}, "min_experience_months": 18},
+      {"from": "教育担当補助", "to": "教育担当", "required_counts": {"教育担当補助": 5}, "min_experience_months": 30}
+    ]
+  },
+  "消防設備": {
+    "stage_order": ["見学", "補助", "単独", "教育担当補助", "教育担当"],
+    "transitions": [
+      {"from": "見学", "to": "補助", "required_counts": {"見学": 3}},
+      {"from": "補助", "to": "単独", "required_counts": {"補助": 5, "消防設備点検": 3}},
+      {"from": "単独", "to": "教育担当補助", "required_counts": {"単独対応": 10}, "min_experience_months": 24},
+      {"from": "教育担当補助", "to": "教育担当", "required_counts": {"教育担当補助": 5}, "min_experience_months": 36}
+    ]
+  },
+  "監視盤": {
+    "stage_order": ["見学", "補助", "単独", "教育担当補助", "教育担当"],
+    "transitions": [
+      {"from": "見学", "to": "補助", "required_counts": {"見学": 2}},
+      {"from": "補助", "to": "単独", "required_counts": {"補助": 4}},
+      {"from": "単独", "to": "教育担当補助", "required_counts": {"単独対応": 8}, "min_experience_months": 18},
+      {"from": "教育担当補助", "to": "教育担当", "required_counts": {"教育担当補助": 4}, "min_experience_months": 30}
+    ]
+  }
+}

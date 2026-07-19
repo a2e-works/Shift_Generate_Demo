@@ -40,7 +40,7 @@
 
 - [x] STEP0 設計思想
 - [x] STEP1 メンバー15名の属性設計
-- [ ] STEP2 教育ロードマップ設計
+- [x] STEP2 教育ロードマップ設計
 - [ ] STEP3 制約条件設計
 - [ ] STEP4 シフト健全度計算設計
 - [ ] STEP5 仮想シフト作成
@@ -55,14 +55,33 @@ a2e-works/
 ├── README.md
 ├── requirements.txt
 ├── data/
-│   └── members.json      # STEP1: メンバー15名のマスタデータ
-└── src/
-    └── members.py         # STEP1: メンバーのデータモデル(dataclass)と読み込みロジック
+│   ├── members.json             # STEP1: メンバー15名のマスタデータ(実績回数含む)
+│   └── education_roadmap.json   # STEP2: 設備別の教育ロードマップ(段階と昇格条件)
+├── src/
+│   ├── members.py                # STEP1: メンバーのデータモデル(dataclass)と読み込みロジック
+│   └── education.py              # STEP2: 昇格条件の判定ロジック(誰が次段階に近いか)
+└── scripts/
+    └── generate_demo_experience_counts.py  # デモ用の実績回数を自動生成するツール
 ```
 
 ## 実行方法
 
 ```bash
 pip install -r requirements.txt
-python src/members.py
+python src/members.py       # メンバー構成のサマリを表示
+python src/education.py     # 昇格条件クリア状況・育成中メンバーの一覧を表示
 ```
+
+## STEP2: 教育ロードマップの考え方
+
+教育は「見学→補助→単独→教育担当補助→教育担当」の5段階で進む(セクション11)。
+各設備(受変電設備・空調設備・消防設備・監視盤)ごとに、段階を進むための条件を
+`data/education_roadmap.json` に定義している。条件は「経験日数」ではなく
+**経験回数**(例: 停電試験2回、法定点検3回)と、必要に応じて経験月数の下限。
+
+`src/education.py` はこの条件とメンバーの実績を突き合わせ、
+- 誰がもう昇格条件をクリアしているか
+- 誰が育成中で、あと何が足りないか
+
+を機械的に可視化する。これは自動昇格の判断ではなく、
+**管理者が教育計画を立てるための材料**として位置づける(設計原則3・4・5に対応)。

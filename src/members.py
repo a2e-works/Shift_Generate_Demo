@@ -47,6 +47,11 @@ class Member:
     development_priority: str = "中"       # 育成優先度: 高 / 中 / 低
     future_candidate: Optional[str] = None  # 例: "リーダー候補", "サブリーダー候補", None
 
+    # 設備別の実績回数。例: {"受変電設備": {"見学": 3, "停電試験": 2, ...}}
+    # 教育ロードマップ(education_roadmap.json)の required_counts と突き合わせて
+    # 次段階への到達判定に使う(STEP2)。
+    experience_counts: Dict[str, Dict[str, int]] = field(default_factory=dict)
+
     def role_rank(self) -> int:
         """役職の階段上の位置(0=新人 〜 4=リーダー)。健全度計算等で利用予定。"""
         return ROLE_ORDER.index(self.role)

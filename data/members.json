@@ -5,14 +5,54 @@
     "team": "A",
     "role": "リーダー",
     "experience_months": 118,
-    "certifications": ["第二種電気工事士", "危険物取扱者乙4", "第一種冷凍機械責任者"],
-    "equipment_skills": {"受変電設備": "教育担当", "空調設備": "教育担当", "消防設備": "単独", "監視盤": "教育担当"},
+    "certifications": [
+      "第二種電気工事士",
+      "危険物取扱者乙4",
+      "第一種冷凍機械責任者"
+    ],
+    "equipment_skills": {
+      "受変電設備": "教育担当",
+      "空調設備": "教育担当",
+      "消防設備": "単独",
+      "監視盤": "教育担当"
+    },
     "event_experience_count": 14,
     "night_shift_experience_count": 210,
     "teaching_experience_count": 9,
-    "backup_capable_tasks": ["夜勤リーダー代行", "資格更新管理", "新人教育計画"],
+    "backup_capable_tasks": [
+      "夜勤リーダー代行",
+      "資格更新管理",
+      "新人教育計画"
+    ],
     "development_priority": "低",
-    "future_candidate": null
+    "future_candidate": null,
+    "experience_counts": {
+      "受変電設備": {
+        "見学": 3,
+        "補助": 5,
+        "停電試験": 2,
+        "単独対応": 10,
+        "教育担当補助": 5
+      },
+      "空調設備": {
+        "見学": 3,
+        "補助": 5,
+        "法定点検": 3,
+        "単独対応": 8,
+        "教育担当補助": 5
+      },
+      "消防設備": {
+        "見学": 3,
+        "補助": 5,
+        "消防設備点検": 3
+      },
+      "監視盤": {
+        "見学": 2,
+        "補助": 4,
+        "単独対応": 8,
+        "教育担当補助": 4
+      }
+    }
   },
   {
     "member_id": "M02",
@@ -20,14 +60,50 @@
     "team": "B",
     "role": "リーダー",
     "experience_months": 104,
-    "certifications": ["第二種電気工事士", "危険物取扱者乙4"],
-    "equipment_skills": {"受変電設備": "教育担当", "空調設備": "単独", "消防設備": "教育担当", "監視盤": "単独"},
+    "certifications": [
+      "第二種電気工事士",
+      "危険物取扱者乙4"
+    ],
+    "equipment_skills": {
+      "受変電設備": "教育担当",
+      "空調設備": "単独",
+      "消防設備": "教育担当",
+      "監視盤": "単独"
+    },
     "event_experience_count": 11,
     "night_shift_experience_count": 188,
     "teaching_experience_count": 7,
-    "backup_capable_tasks": ["夜勤リーダー代行", "イベント対応統括"],
+    "backup_capable_tasks": [
+      "夜勤リーダー代行",
+      "イベント対応統括"
+    ],
     "development_priority": "低",
-    "future_candidate": null
+    "future_candidate": null,
+    "experience_counts": {
+      "受変電設備": {
+        "見学": 3,
+        "補助": 5,
+        "停電試験": 2,
+        "単独対応": 10,
+        "教育担当補助": 5
+      },
+      "空調設備": {
+        "見学": 3,
+        "補助": 5,
+        "法定点検": 3
+      },
+      "消防設備": {
+        "見学": 3,
+        "補助": 5,
+        "消防設備点検": 3,
+        "単独対応": 10,
+        "教育担当補助": 5
+      },
+      "監視盤": {
+        "見学": 2,
+        "補助": 4
+      }
+    }
   },
   {
     "member_id": "M03",
@@ -35,14 +111,50 @@
     "team": "C",
     "role": "リーダー",
     "experience_months": 96,
-    "certifications": ["危険物取扱者乙4", "第三種冷凍機械責任者"],
-    "equipment_skills": {"受変電設備": "単独", "空調設備": "教育担当", "消防設備": "単独", "監視盤": "教育担当"},
+    "certifications": [
+      "危険物取扱者乙4",
+      "第三種冷凍機械責任者"
+    ],
+    "equipment_skills": {
+      "受変電設備": "単独",
+      "空調設備": "教育担当",
+      "消防設備": "単独",
+      "監視盤": "教育担当"
+    },
     "event_experience_count": 10,
     "night_shift_experience_count": 175,
     "teaching_experience_count": 6,
-    "backup_capable_tasks": ["夜勤リーダー代行", "教育担当補助の育成"],
+    "backup_capable_tasks": [
+      "夜勤リーダー代行",
+      "教育担当補助の育成"
+    ],
     "development_priority": "低",
-    "future_candidate": null
+    "future_candidate": null,
+    "experience_counts": {
+      "受変電設備": {
+        "見学": 3,
+        "補助": 5,
+        "停電試験": 2
+      },
+      "空調設備": {
+        "見学": 3,
+        "補助": 5,
+        "法定点検": 3,
+        "単独対応": 8,
+        "教育担当補助": 5
+      },
+      "消防設備": {
+        "見学": 3,
+        "補助": 5,
+        "消防設備点検": 3
+      },
+      "監視盤": {
+        "見学": 2,
+        "補助": 4,
+        "単独対応": 8,
+        "教育担当補助": 4
+      }
+    }
   },
   {
     "member_id": "M04",
@@ -50,14 +162,47 @@
     "team": "A",
     "role": "中堅",
     "experience_months": 46,
-    "certifications": ["危険物取扱者乙4"],
-    "equipment_skills": {"受変電設備": "単独", "空調設備": "単独", "消防設備": "補助", "監視盤": "単独"},
+    "certifications": [
+      "危険物取扱者乙4"
+    ],
+    "equipment_skills": {
+      "受変電設備": "単独",
+      "空調設備": "単独",
+      "消防設備": "補助",
+      "監視盤": "単独"
+    },
     "event_experience_count": 5,
     "night_shift_experience_count": 80,
     "teaching_experience_count": 1,
-    "backup_capable_tasks": ["夜勤単独対応"],
+    "backup_capable_tasks": [
+      "夜勤単独対応"
+    ],
     "development_priority": "高",
-    "future_candidate": "サブリーダー候補"
+    "future_candidate": "サブリーダー候補",
+    "experience_counts": {
+      "受変電設備": {
+        "見学": 3,
+        "補助": 5,
+        "停電試験": 2,
+        "単独対応": 6
+      },
+      "空調設備": {
+        "見学": 3,
+        "補助": 5,
+        "法定点検": 3,
+        "単独対応": 4
+      },
+      "消防設備": {
+        "見学": 3,
+        "補助": 3,
+        "消防設備点検": 1
+      },
+      "監視盤": {
+        "見学": 2,
+        "補助": 4,
+        "単独対応": 4
+      }
+    }
   },
   {
     "member_id": "M05",
@@ -65,14 +210,47 @@
     "team": "B",
     "role": "中堅",
     "experience_months": 41,
-    "certifications": ["危険物取扱者乙4"],
-    "equipment_skills": {"受変電設備": "単独", "空調設備": "補助", "消防設備": "単独", "監視盤": "単独"},
+    "certifications": [
+      "危険物取扱者乙4"
+    ],
+    "equipment_skills": {
+      "受変電設備": "単独",
+      "空調設備": "補助",
+      "消防設備": "単独",
+      "監視盤": "単独"
+    },
     "event_experience_count": 4,
     "night_shift_experience_count": 72,
     "teaching_experience_count": 0,
-    "backup_capable_tasks": ["夜勤単独対応"],
+    "backup_capable_tasks": [
+      "夜勤単独対応"
+    ],
     "development_priority": "高",
-    "future_candidate": "サブリーダー候補"
+    "future_candidate": "サブリーダー候補",
+    "experience_counts": {
+      "受変電設備": {
+        "見学": 3,
+        "補助": 5,
+        "停電試験": 2,
+        "単独対応": 6
+      },
+      "空調設備": {
+        "見学": 3,
+        "補助": 3,
+        "法定点検": 1
+      },
+      "消防設備": {
+        "見学": 3,
+        "補助": 5,
+        "消防設備点検": 3,
+        "単独対応": 6
+      },
+      "監視盤": {
+        "見学": 2,
+        "補助": 4,
+        "単独対応": 4
+      }
+    }
   },
   {
     "member_id": "M06",
@@ -81,13 +259,43 @@
     "role": "中堅",
     "experience_months": 38,
     "certifications": [],
-    "equipment_skills": {"受変電設備": "補助", "空調設備": "単独", "消防設備": "単独", "監視盤": "補助"},
+    "equipment_skills": {
+      "受変電設備": "補助",
+      "空調設備": "単独",
+      "消防設備": "単独",
+      "監視盤": "補助"
+    },
     "event_experience_count": 3,
     "night_shift_experience_count": 65,
     "teaching_experience_count": 0,
-    "backup_capable_tasks": ["空調設備対応"],
+    "backup_capable_tasks": [
+      "空調設備対応"
+    ],
     "development_priority": "中",
-    "future_candidate": null
+    "future_candidate": null,
+    "experience_counts": {
+      "受変電設備": {
+        "見学": 3,
+        "補助": 3,
+        "停電試験": 1
+      },
+      "空調設備": {
+        "見学": 3,
+        "補助": 5,
+        "法定点検": 3,
+        "単独対応": 4
+      },
+      "消防設備": {
+        "見学": 3,
+        "補助": 5,
+        "消防設備点検": 3,
+        "単独対応": 6
+      },
+      "監視盤": {
+        "見学": 2,
+        "補助": 2
+      }
+    }
   },
   {
     "member_id": "M07",
@@ -95,14 +303,46 @@
     "team": "D",
     "role": "中堅",
     "experience_months": 35,
-    "certifications": ["危険物取扱者乙4"],
-    "equipment_skills": {"受変電設備": "補助", "空調設備": "単独", "消防設備": "補助", "監視盤": "単独"},
+    "certifications": [
+      "危険物取扱者乙4"
+    ],
+    "equipment_skills": {
+      "受変電設備": "補助",
+      "空調設備": "単独",
+      "消防設備": "補助",
+      "監視盤": "単独"
+    },
     "event_experience_count": 3,
     "night_shift_experience_count": 60,
     "teaching_experience_count": 0,
-    "backup_capable_tasks": ["監視盤対応"],
+    "backup_capable_tasks": [
+      "監視盤対応"
+    ],
     "development_priority": "中",
-    "future_candidate": null
+    "future_candidate": null,
+    "experience_counts": {
+      "受変電設備": {
+        "見学": 3,
+        "補助": 3,
+        "停電試験": 1
+      },
+      "空調設備": {
+        "見学": 3,
+        "補助": 5,
+        "法定点検": 3,
+        "単独対応": 4
+      },
+      "消防設備": {
+        "見学": 3,
+        "補助": 3,
+        "消防設備点検": 1
+      },
+      "監視盤": {
+        "見学": 2,
+        "補助": 4,
+        "単独対応": 4
+      }
+    }
   },
   {
     "member_id": "M08",
@@ -111,13 +351,31 @@
     "role": "一般",
     "experience_months": 20,
     "certifications": [],
-    "equipment_skills": {"受変電設備": "補助", "空調設備": "補助", "消防設備": "見学", "監視盤": "単独"},
+    "equipment_skills": {
+      "受変電設備": "補助",
+      "空調設備": "補助",
+      "消防設備": "見学",
+      "監視盤": "単独"
+    },
     "event_experience_count": 1,
     "night_shift_experience_count": 30,
     "teaching_experience_count": 0,
     "backup_capable_tasks": [],
     "development_priority": "中",
-    "future_candidate": null
+    "future_candidate": null,
+    "experience_counts": {
+      "受変電設備": {
+        "見学": 3
+      },
+      "空調設備": {
+        "見学": 3
+      },
+      "消防設備": {},
+      "監視盤": {
+        "見学": 2,
+        "補助": 4
+      }
+    }
   },
   {
     "member_id": "M09",
@@ -126,13 +384,30 @@
     "role": "一般",
     "experience_months": 16,
     "certifications": [],
-    "equipment_skills": {"受変電設備": "見学", "空調設備": "補助", "消防設備": "補助", "監視盤": "補助"},
+    "equipment_skills": {
+      "受変電設備": "見学",
+      "空調設備": "補助",
+      "消防設備": "補助",
+      "監視盤": "補助"
+    },
     "event_experience_count": 0,
     "night_shift_experience_count": 22,
     "teaching_experience_count": 0,
     "backup_capable_tasks": [],
     "development_priority": "中",
-    "future_candidate": null
+    "future_candidate": null,
+    "experience_counts": {
+      "受変電設備": {},
+      "空調設備": {
+        "見学": 3
+      },
+      "消防設備": {
+        "見学": 3
+      },
+      "監視盤": {
+        "見学": 2
+      }
+    }
   },
   {
     "member_id": "M10",
@@ -140,14 +415,52 @@
     "team": "D",
     "role": "サブリーダー",
     "experience_months": 68,
-    "certifications": ["危険物取扱者乙4", "第二種電気工事士"],
-    "equipment_skills": {"受変電設備": "単独", "空調設備": "教育担当補助", "消防設備": "単独", "監視盤": "教育担当補助"},
+    "certifications": [
+      "危険物取扱者乙4",
+      "第二種電気工事士"
+    ],
+    "equipment_skills": {
+      "受変電設備": "単独",
+      "空調設備": "教育担当補助",
+      "消防設備": "単独",
+      "監視盤": "教育担当補助"
+    },
     "event_experience_count": 8,
     "night_shift_experience_count": 130,
     "teaching_experience_count": 3,
-    "backup_capable_tasks": ["夜勤リーダー代行", "教育担当補助"],
+    "backup_capable_tasks": [
+      "夜勤リーダー代行",
+      "教育担当補助"
+    ],
     "development_priority": "中",
-    "future_candidate": "リーダー候補"
+    "future_candidate": "リーダー候補",
+    "experience_counts": {
+      "受変電設備": {
+        "見学": 3,
+        "補助": 5,
+        "停電試験": 2,
+        "単独対応": 6
+      },
+      "空調設備": {
+        "見学": 3,
+        "補助": 5,
+        "法定点検": 3,
+        "単独対応": 8,
+        "教育担当補助": 3
+      },
+      "消防設備": {
+        "見学": 3,
+        "補助": 5,
+        "消防設備点検": 3,
+        "単独対応": 6
+      },
+      "監視盤": {
+        "見学": 2,
+        "補助": 4,
+        "単独対応": 8,
+        "教育担当補助": 2
+      }
+    }
   },
   {
     "member_id": "M11",
@@ -155,14 +468,49 @@
     "team": "E",
     "role": "サブリーダー",
     "experience_months": 61,
-    "certifications": ["危険物取扱者乙4"],
-    "equipment_skills": {"受変電設備": "単独", "空調設備": "単独", "消防設備": "教育担当補助", "監視盤": "単独"},
+    "certifications": [
+      "危険物取扱者乙4"
+    ],
+    "equipment_skills": {
+      "受変電設備": "単独",
+      "空調設備": "単独",
+      "消防設備": "教育担当補助",
+      "監視盤": "単独"
+    },
     "event_experience_count": 7,
     "night_shift_experience_count": 118,
     "teaching_experience_count": 2,
-    "backup_capable_tasks": ["夜勤リーダー代行"],
+    "backup_capable_tasks": [
+      "夜勤リーダー代行"
+    ],
     "development_priority": "中",
-    "future_candidate": "リーダー候補"
+    "future_candidate": "リーダー候補",
+    "experience_counts": {
+      "受変電設備": {
+        "見学": 3,
+        "補助": 5,
+        "停電試験": 2,
+        "単独対応": 6
+      },
+      "空調設備": {
+        "見学": 3,
+        "補助": 5,
+        "法定点検": 3,
+        "単独対応": 4
+      },
+      "消防設備": {
+        "見学": 3,
+        "補助": 5,
+        "消防設備点検": 3,
+        "単独対応": 10,
+        "教育担当補助": 3
+      },
+      "監視盤": {
+        "見学": 2,
+        "補助": 4,
+        "単独対応": 4
+      }
+    }
   },
   {
     "member_id": "M12",
@@ -171,13 +519,26 @@
     "role": "新人",
     "experience_months": 6,
     "certifications": [],
-    "equipment_skills": {"受変電設備": "見学", "空調設備": "見学", "消防設備": "見学", "監視盤": "補助"},
+    "equipment_skills": {
+      "受変電設備": "見学",
+      "空調設備": "見学",
+      "消防設備": "見学",
+      "監視盤": "補助"
+    },
     "event_experience_count": 0,
     "night_shift_experience_count": 4,
     "teaching_experience_count": 0,
     "backup_capable_tasks": [],
     "development_priority": "高",
-    "future_candidate": null
+    "future_candidate": null,
+    "experience_counts": {
+      "受変電設備": {},
+      "空調設備": {},
+      "消防設備": {},
+      "監視盤": {
+        "見学": 2
+      }
+    }
   },
   {
     "member_id": "M13",
@@ -186,13 +547,24 @@
     "role": "新人",
     "experience_months": 3,
     "certifications": [],
-    "equipment_skills": {"受変電設備": "見学", "空調設備": "見学", "消防設備": "見学", "監視盤": "見学"},
+    "equipment_skills": {
+      "受変電設備": "見学",
+      "空調設備": "見学",
+      "消防設備": "見学",
+      "監視盤": "見学"
+    },
     "event_experience_count": 0,
     "night_shift_experience_count": 1,
     "teaching_experience_count": 0,
     "backup_capable_tasks": [],
     "development_priority": "高",
-    "future_candidate": null
+    "future_candidate": null,
+    "experience_counts": {
+      "受変電設備": {},
+      "空調設備": {},
+      "消防設備": {},
+      "監視盤": {}
+    }
   },
   {
     "member_id": "M14",
@@ -200,14 +572,46 @@
     "team": "E",
     "role": "中堅",
     "experience_months": 33,
-    "certifications": ["危険物取扱者乙4"],
-    "equipment_skills": {"受変電設備": "補助", "空調設備": "単独", "消防設備": "単独", "監視盤": "補助"},
+    "certifications": [
+      "危険物取扱者乙4"
+    ],
+    "equipment_skills": {
+      "受変電設備": "補助",
+      "空調設備": "単独",
+      "消防設備": "単独",
+      "監視盤": "補助"
+    },
     "event_experience_count": 2,
     "night_shift_experience_count": 55,
     "teaching_experience_count": 0,
-    "backup_capable_tasks": ["消防設備対応"],
+    "backup_capable_tasks": [
+      "消防設備対応"
+    ],
     "development_priority": "中",
-    "future_candidate": null
+    "future_candidate": null,
+    "experience_counts": {
+      "受変電設備": {
+        "見学": 3,
+        "補助": 3,
+        "停電試験": 1
+      },
+      "空調設備": {
+        "見学": 3,
+        "補助": 5,
+        "法定点検": 3,
+        "単独対応": 4
+      },
+      "消防設備": {
+        "見学": 3,
+        "補助": 5,
+        "消防設備点検": 3,
+        "単独対応": 6
+      },
+      "監視盤": {
+        "見学": 2,
+        "補助": 2
+      }
+    }
   },
   {
     "member_id": "M15",
@@ -216,12 +620,27 @@
     "role": "一般",
     "experience_months": 14,
     "certifications": [],
-    "equipment_skills": {"受変電設備": "見学", "空調設備": "補助", "消防設備": "見学", "監視盤": "補助"},
+    "equipment_skills": {
+      "受変電設備": "見学",
+      "空調設備": "補助",
+      "消防設備": "見学",
+      "監視盤": "補助"
+    },
     "event_experience_count": 0,
     "night_shift_experience_count": 18,
     "teaching_experience_count": 0,
     "backup_capable_tasks": [],
     "development_priority": "中",
-    "future_candidate": null
+    "future_candidate": null,
+    "experience_counts": {
+      "受変電設備": {},
+      "空調設備": {
+        "見学": 3
+      },
+      "消防設備": {},
+      "監視盤": {
+        "見学": 2
+      }
+    }
   }
 ]
