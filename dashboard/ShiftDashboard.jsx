@@ -1,0 +1,466 @@
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Gauge,
+  CalendarDays,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Clock3,
+  UserCircle2,
+  ShieldCheck,
+  Moon,
+} from "lucide-react";
+
+/**
+ * STEP6: シフト改善支援ダッシュボード(プロトタイプ)
+ *
+ * 目的:
+ *   将来的に「メンバーがスマホでシフトを確認し、希望休を申請し、
+ *   管理者が承認すると即座に反映される」体験を、実際に動くものとして検証する。
+ *
+ * 位置づけ:
+ *   これは本番のスマホアプリではない。window.storage(共有ストレージ)を使い、
+ *   申請〜承認のやり取りがサーバー構築なしで即時反映されることを実証するプロトタイプ。
+ *   実際の運用では、これに認証・Excel連携・通知などを加えて本番化する想定(V2以降)。
+ */
+
+// ---- STEP1〜5で生成したデータ(2026年8月分のデモ) ----
+const DATA = {"members": [{"id": "M01", "name": "佐藤 一郎", "team": "A", "role": "リーダー"}, {"id": "M02", "name": "鈴木 次郎", "team": "B", "role": "リーダー"}, {"id": "M03", "name": "高橋 三郎", "team": "C", "role": "リーダー"}, {"id": "M04", "name": "田中 誠", "team": "A", "role": "中堅"}, {"id": "M05", "name": "伊藤 健太", "team": "B", "role": "中堅"}, {"id": "M06", "name": "渡辺 修", "team": "C", "role": "中堅"}, {"id": "M07", "name": "山本 隆", "team": "D", "role": "中堅"}, {"id": "M08", "name": "中村 陽介", "team": "A", "role": "一般"}, {"id": "M09", "name": "小林 拓也", "team": "C", "role": "一般"}, {"id": "M10", "name": "加藤 大輔", "team": "D", "role": "サブリーダー"}, {"id": "M11", "name": "吉田 匠", "team": "E", "role": "サブリーダー"}, {"id": "M12", "name": "山田 悠斗", "team": "B", "role": "新人"}, {"id": "M13", "name": "佐々木 蓮", "team": "D", "role": "新人"}, {"id": "M14", "name": "松本 洋平", "team": "E", "role": "中堅"}, {"id": "M15", "name": "井上 直樹", "team": "E", "role": "一般"}], "team_shifts_by_date": [{"date": "2026-08-01", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-02", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-03", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-04", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-05", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-06", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-07", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-08", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-09", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-10", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-11", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-12", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-13", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-14", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-15", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-16", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-17", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-18", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-19", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-20", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-21", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-22", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-23", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-24", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-25", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-26", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-27", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-28", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-29", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-30", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-31", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}], "health": {"教育達成率": 41.2, "属人化耐性": 100.0, "資格充足率": 50.0, "バックアップ率": 66.7, "変更耐性": 100.0}, "health_overall": 71.6, "requested_days_off": {"M04": ["2026-08-10", "2026-08-11"], "M12": ["2026-08-20"], "M09": ["2026-08-15", "2026-08-16", "2026-08-17"]}, "night_overages": [{"member": "小林 拓也", "role": "一般", "scheduled_nights": 7, "limit": 6}, {"member": "山田 悠斗", "role": "新人", "scheduled_nights": 6, "limit": 4}, {"member": "佐々木 蓮", "role": "新人", "scheduled_nights": 6, "limit": 4}]};
+
+const STORAGE_KEY = "a2e_leave_requests_v1";
+
+const SHIFT_META = {
+  "早番A": { sub: "教育投資枠", chip: "bg-violet-500/15 text-violet-300 border-violet-500/40", dot: "bg-violet-400" },
+  "早番B": { sub: "早番", chip: "bg-amber-500/15 text-amber-300 border-amber-500/40", dot: "bg-amber-400" },
+  "夜勤": { sub: "夜間対応", chip: "bg-indigo-500/15 text-indigo-300 border-indigo-500/40", dot: "bg-indigo-400" },
+  "明け": { sub: "夜勤明け", chip: "bg-zinc-500/15 text-zinc-300 border-zinc-500/40", dot: "bg-zinc-400" },
+  "休み": { sub: "休日", chip: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40", dot: "bg-emerald-400" },
+};
+
+const STATUS_META = {
+  pending: { label: "承認待ち", cls: "text-amber-300 bg-amber-500/10 border-amber-500/40", Icon: Clock3 },
+  approved: { label: "承認済み", cls: "text-emerald-300 bg-emerald-500/10 border-emerald-500/40", Icon: CheckCircle2 },
+  rejected: { label: "却下", cls: "text-red-300 bg-red-500/10 border-red-500/40", Icon: XCircle },
+};
+
+function shiftFor(memberId, dateStr) {
+  const member = DATA.members.find((m) => m.id === memberId);
+  const day = DATA.team_shifts_by_date.find((d) => d.date === dateStr);
+  if (!member || !day) return null;
+  return day.shifts[member.team];
+}
+
+function healthColor(score) {
+  if (score >= 80) return "#34d399"; // emerald-400
+  if (score >= 60) return "#fbbf24"; // amber-400
+  return "#f87171"; // red-400
+}
+
+function HealthGauge({ value }) {
+  const radius = 52;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - value / 100);
+  const color = healthColor(value);
+  return (
+    <div className="relative w-32 h-32 shrink-0">
+      <svg width="128" height="128" viewBox="0 0 128 128">
+        <circle cx="64" cy="64" r={radius} strokeWidth="10" stroke="#1e293b" fill="none" />
+        <circle
+          cx="64"
+          cy="64"
+          r={radius}
+          strokeWidth="10"
+          stroke={color}
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform="rotate(-90 64 64)"
+          style={{ transition: "stroke-dashoffset 0.6s ease" }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="font-mono text-2xl font-semibold text-slate-100">{value.toFixed(1)}</span>
+        <span className="text-[10px] tracking-widest text-slate-500 uppercase">Health</span>
+      </div>
+    </div>
+  );
+}
+
+function MetricBar({ label, value }) {
+  const color = healthColor(value);
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1">
+        <span className="text-xs text-slate-400 tracking-wide">{label}</span>
+        <span className="font-mono text-sm text-slate-200">{value.toFixed(1)}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${value}%`, backgroundColor: color }} />
+      </div>
+    </div>
+  );
+}
+
+function MonthCalendar({ memberId, onPickDate }) {
+  const cells = useMemo(() => {
+    const days = DATA.team_shifts_by_date.map((d) => d.date);
+    const firstDow = new Date(days[0] + "T00:00:00Z").getUTCDay(); // 0=Sun
+    const blanks = Array.from({ length: firstDow }, () => null);
+    return [...blanks, ...days];
+  }, []);
+
+  return (
+    <div>
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {["日", "月", "火", "水", "木", "金", "土"].map((w) => (
+          <div key={w} className="text-center text-[10px] text-slate-500 tracking-widest">
+            {w}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((dateStr, i) => {
+          if (!dateStr) return <div key={`b${i}`} />;
+          const shift = shiftFor(memberId, dateStr);
+          const meta = SHIFT_META[shift] || {};
+          const dayNum = parseInt(dateStr.slice(-2), 10);
+          return (
+            <button
+              key={dateStr}
+              onClick={() => onPickDate(dateStr)}
+              className={`aspect-square rounded-md border text-left p-1 flex flex-col justify-between hover:brightness-125 transition ${meta.chip || "bg-slate-800 border-slate-700"}`}
+            >
+              <span className="text-[10px] font-mono text-slate-300">{dayNum}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${meta.dot || "bg-slate-500"}`} />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Legend() {
+  return (
+    <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
+      {Object.entries(SHIFT_META).map(([label, meta]) => (
+        <div key={label} className="flex items-center gap-1.5">
+          <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
+          <span>
+            {label}
+            <span className="text-slate-600">・{meta.sub}</span>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function ShiftDashboard() {
+  const [view, setView] = useState("member"); // "member" | "admin"
+  const [memberId, setMemberId] = useState(DATA.members[0].id);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [formDate, setFormDate] = useState("2026-08-10");
+  const [formReason, setFormReason] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await window.storage.get(STORAGE_KEY, true);
+        setRequests(res ? JSON.parse(res.value) : []);
+      } catch (e) {
+        // 初回アクセス: 既存の希望休データを申請の初期状態としてシードする
+        const seed = [];
+        Object.entries(DATA.requested_days_off).forEach(([mid, dates]) => {
+          dates.forEach((date) => {
+            seed.push({
+              id: `${mid}-${date}-seed`,
+              member_id: mid,
+              date,
+              reason: "(初期データ)",
+              status: "pending",
+              created_at: new Date().toISOString(),
+            });
+          });
+        });
+        try {
+          await window.storage.set(STORAGE_KEY, JSON.stringify(seed), true);
+        } catch (e2) {
+          console.error("初期データの保存に失敗しました", e2);
+        }
+        setRequests(seed);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  async function persist(next) {
+    setRequests(next);
+    try {
+      const result = await window.storage.set(STORAGE_KEY, JSON.stringify(next), true);
+      if (!result) console.error("保存に失敗しました(結果なし)");
+    } catch (e) {
+      console.error("保存に失敗しました", e);
+    }
+  }
+
+  async function submitRequest() {
+    if (!formDate) return;
+    setSaving(true);
+    const newReq = {
+      id: `${memberId}-${formDate}-${Date.now()}`,
+      member_id: memberId,
+      date: formDate,
+      reason: formReason.trim(),
+      status: "pending",
+      created_at: new Date().toISOString(),
+    };
+    await persist([...requests, newReq]);
+    setFormReason("");
+    setSaving(false);
+  }
+
+  async function updateStatus(id, status) {
+    await persist(requests.map((r) => (r.id === id ? { ...r, status } : r)));
+  }
+
+  const membersById = useMemo(() => Object.fromEntries(DATA.members.map((m) => [m.id, m])), []);
+  const currentMember = membersById[memberId];
+  const myRequests = requests.filter((r) => r.member_id === memberId).sort((a, b) => a.date.localeCompare(b.date));
+
+  const actionableRequests = requests
+    .filter((r) => r.status === "pending" && shiftFor(r.member_id, r.date) !== "休み")
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const resolvedRequests = requests
+    .filter((r) => r.status !== "pending")
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+      <header className="border-b border-slate-800 px-5 py-4 flex items-center justify-between sticky top-0 bg-slate-950/95 backdrop-blur z-10">
+        <div>
+          <div className="text-[11px] tracking-[0.2em] text-slate-500 uppercase">A2E Works</div>
+          <div className="font-bold tracking-tight text-lg">シフト改善支援ダッシュボード</div>
+        </div>
+        <div className="flex rounded-lg border border-slate-800 overflow-hidden text-sm">
+          <button
+            onClick={() => setView("member")}
+            className={`px-3 py-1.5 flex items-center gap-1.5 transition ${
+              view === "member" ? "bg-slate-100 text-slate-900" : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <UserCircle2 size={16} /> メンバー
+          </button>
+          <button
+            onClick={() => setView("admin")}
+            className={`px-3 py-1.5 flex items-center gap-1.5 transition relative ${
+              view === "admin" ? "bg-slate-100 text-slate-900" : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <ShieldCheck size={16} /> 管理者
+            {actionableRequests.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center">
+                {actionableRequests.length}
+              </span>
+            )}
+          </button>
+        </div>
+      </header>
+
+      {loading ? (
+        <div className="p-8 text-slate-500 text-sm">読み込み中...</div>
+      ) : view === "member" ? (
+        <main className="p-5 max-w-md mx-auto space-y-6">
+          <div>
+            <label className="text-xs text-slate-500 tracking-wide">あなた(デモ用の選択)</label>
+            <select
+              value={memberId}
+              onChange={(e) => setMemberId(e.target.value)}
+              className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm"
+            >
+              {DATA.members.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}({m.role} / チーム{m.team})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-200">
+              <CalendarDays size={16} /> 2026年8月のシフト
+            </div>
+            <MonthCalendar
+              memberId={memberId}
+              onPickDate={(d) => {
+                setFormDate(d);
+              }}
+            />
+            <div className="mt-3">
+              <Legend />
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+            <div className="text-sm font-semibold text-slate-200">希望休を申請する</div>
+            <input
+              type="date"
+              min="2026-08-01"
+              max="2026-08-31"
+              value={formDate}
+              onChange={(e) => setFormDate(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm"
+            />
+            <input
+              type="text"
+              placeholder="理由(任意)"
+              value={formReason}
+              onChange={(e) => setFormReason(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm placeholder:text-slate-600"
+            />
+            <button
+              onClick={submitRequest}
+              disabled={saving}
+              className="w-full bg-slate-100 text-slate-900 font-medium rounded-lg py-2 text-sm hover:bg-white transition disabled:opacity-50"
+            >
+              {saving ? "送信中..." : "申請する"}
+            </button>
+            <p className="text-[11px] text-slate-500">
+              申請は管理者ビューに即時反映されます。承認/却下されるとここに結果が表示されます。
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-slate-200">あなたの申請状況</div>
+            {myRequests.length === 0 && <div className="text-xs text-slate-600">申請はまだありません。</div>}
+            {myRequests.map((r) => {
+              const status = STATUS_META[r.status];
+              const StatusIcon = status.Icon;
+              return (
+                <div key={r.id} className="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-lg px-3 py-2">
+                  <div>
+                    <div className="text-sm font-mono text-slate-200">{r.date}</div>
+                    {r.reason && <div className="text-xs text-slate-500">{r.reason}</div>}
+                  </div>
+                  <span className={`text-[11px] px-2 py-1 rounded-full border flex items-center gap-1 ${status.cls}`}>
+                    <StatusIcon size={12} /> {status.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </main>
+      ) : (
+        <main className="p-5 max-w-2xl mx-auto space-y-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-5">
+            <HealthGauge value={DATA.health_overall} />
+            <div className="flex-1 space-y-3">
+              <MetricBar label="教育達成率" value={DATA.health["教育達成率"]} />
+              <MetricBar label="属人化耐性" value={DATA.health["属人化耐性"]} />
+              <MetricBar label="資格充足率" value={DATA.health["資格充足率"]} />
+              <MetricBar label="バックアップ率" value={DATA.health["バックアップ率"]} />
+              <MetricBar label="変更耐性" value={DATA.health["変更耐性"]} />
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-200">
+              <AlertTriangle size={16} className="text-amber-400" /> 対応が必要な希望休(
+              {actionableRequests.length}件)
+            </div>
+            {actionableRequests.length === 0 && (
+              <div className="text-xs text-slate-600">現在、対応が必要な希望休はありません。</div>
+            )}
+            <div className="space-y-2">
+              {actionableRequests.map((r) => {
+                const member = membersById[r.member_id];
+                const shift = shiftFor(r.member_id, r.date);
+                const meta = SHIFT_META[shift] || {};
+                return (
+                  <div key={r.id} className="border border-slate-800 rounded-lg p-3 bg-slate-950/50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-slate-200">
+                          {member?.name}
+                          <span className="text-slate-500"> / {r.date}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full border ${meta.chip}`}>
+                            割当中: {shift}
+                          </span>
+                        </div>
+                        {r.reason && <div className="text-xs text-slate-500 mt-1">理由: {r.reason}</div>}
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => updateStatus(r.id, "approved")}
+                          className="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/25 transition"
+                        >
+                          承認
+                        </button>
+                        <button
+                          onClick={() => updateStatus(r.id, "rejected")}
+                          className="text-xs px-3 py-1.5 rounded-lg bg-red-500/15 text-red-300 border border-red-500/40 hover:bg-red-500/25 transition"
+                        >
+                          却下
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-600 mt-3">
+              承認後の代替要員の調整は、現時点では管理者が手動で行う想定です(自動再配置はV2以降で検討)。
+            </p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-200">
+              <Moon size={16} className="text-indigo-400" /> 夜勤回数の役職別上限オーバー
+            </div>
+            <div className="space-y-1.5">
+              {DATA.night_overages.map((o, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-300">
+                    {o.member} <span className="text-slate-600">({o.role})</span>
+                  </span>
+                  <span className="font-mono text-red-300">
+                    {o.scheduled_nights}回 / 上限{o.limit}回
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {resolvedRequests.length > 0 && (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+              <div className="text-sm font-semibold text-slate-200 mb-3">対応済みの希望休</div>
+              <div className="space-y-1.5">
+                {resolvedRequests.map((r) => {
+                  const member = membersById[r.member_id];
+                  const status = STATUS_META[r.status];
+                  const StatusIcon = status.Icon;
+                  return (
+                    <div key={r.id} className="flex items-center justify-between text-sm">
+                      <span className="text-slate-400">
+                        {member?.name} / {r.date}
+                      </span>
+                      <span className={`text-[11px] px-2 py-1 rounded-full border flex items-center gap-1 ${status.cls}`}>
+                        <StatusIcon size={12} /> {status.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </main>
+      )}
+    </div>
+  );
+}
