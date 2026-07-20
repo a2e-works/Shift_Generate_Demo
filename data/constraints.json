@@ -1,0 +1,67 @@
+{
+  "qualification_requirements": {
+    "受変電設備": {
+      "min_stage": "単独",
+      "any_of_certifications": ["第二種電気工事士"],
+      "note": "単独対応以上を担う場合、電気工事士資格を保有していることが望ましい"
+    },
+    "空調設備": {
+      "min_stage": "単独",
+      "any_of_certifications": ["第一種冷凍機械責任者", "第三種冷凍機械責任者"],
+      "note": "単独対応以上を担う場合、冷凍機械責任者資格を保有していることが望ましい"
+    },
+    "消防設備": {
+      "min_stage": "単独",
+      "any_of_certifications": ["危険物取扱者乙4"],
+      "note": "単独対応以上を担う場合、危険物取扱者資格を保有していることが望ましい"
+    }
+  },
+
+  "night_shift_limits": {
+    "max_consecutive_nights": 1,
+    "max_nights_per_month": {
+      "新人": 4,
+      "一般": 6,
+      "中堅": 8,
+      "サブリーダー": 8,
+      "リーダー": 8
+    }
+  },
+
+  "working_hour_limits": {
+    "max_hours_per_week": 40,
+    "min_rest_hours_between_shifts": 11
+  },
+
+  "ng_pairs": [
+    {
+      "members": ["M08", "M09"],
+      "reason": "業務連携上の相性課題があり、フォロー体制なしでの同時配置は避ける"
+    }
+  ],
+
+  "recommended_pairs": [
+    {
+      "members": ["M01", "M13"],
+      "reason": "教育担当(受変電設備)×新人の見学同行"
+    },
+    {
+      "members": ["M10", "M12"],
+      "reason": "サブリーダー×育成優先度『高』の新人の育成ペア"
+    },
+    {
+      "members": ["M11", "M09"],
+      "reason": "消防設備 教育担当補助×育成優先度対象者"
+    }
+  ],
+
+  "requested_days_off": {
+    "M04": ["2026-08-10", "2026-08-11"],
+    "M12": ["2026-08-20"],
+    "M09": ["2026-08-15", "2026-08-16", "2026-08-17"]
+  },
+
+  "long_leave": {
+    "M06": {"start": "2026-09-01", "end": "2026-09-07", "reason": "夏季長期休暇"}
+  }
+}
