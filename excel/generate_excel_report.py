@@ -15,13 +15,15 @@
   1. シフト健全度        … 総合スコア+5指標(数式)、判定基準、今月の早番A活用状況
   2. シフト表(2026年8月) … 氏名×日付のシフト表(現場のExcelそのままのイメージ)
   3. 希望休申請一覧      … 各申請について、承認した場合のチーム残人数と判定
-  4. メンバーデータ      … 元データ+数値化した段階(数式のソース)
-  5. 段階マップ(非表示) … 段階名→数値の対応表
+  4. 頭打ち箇所と対応案  … 教育担当が不在で頭打ちの箇所+3つの対応案(STEP7と連動)
+  5. メンバーデータ      … 元データ+数値化した段階(数式のソース)
+  6. 段階マップ(非表示) … 段階名→数値の対応表
 """
 
 from __future__ import annotations
 
 import json
+import sys
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -29,6 +31,15 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.comments import Comment
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+from members import load_members as _load_members_objs  # noqa: E402
+from education import load_roadmap  # noqa: E402
+from future_simulation import (  # noqa: E402
+    instructor_gap_report,
+    distinct_promotion_need,
+    gap_resolution_options,
+)
 
 BASE = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE / "data"
@@ -79,6 +90,7 @@ def build_workbook():
     ws_health = wb.create_sheet("シフト健全度")
     ws_shift = wb.create_sheet("シフト表(2026年8月)")
     ws_requests = wb.create_sheet("希望休申請一覧")
+    ws_gaps = wb.create_sheet("頭打ち箇所と対応案")
     ws_members = wb.create_sheet("メンバーデータ")
     ws_stagemap = wb.create_sheet("段階マップ")
 
@@ -456,6 +468,73 @@ def build_workbook():
     note_cell.alignment = Alignment(wrap_text=True, vertical="top")
     note_cell.font = Font(name=FONT_NAME, italic=True, size=10)
     ws_health.row_dimensions[note_row2].height = 60
+
+    # ---------------- 頭打ち箇所と対応案(STEP7と連動) ----------------
+    member_objs = _load_members_objs()
+    roadmap = load_roadmap()
+    gap_report = instructor_gap_report(member_objs, roadmap)
+    need = distinct_promotion_need(member_objs, gap_report["gaps"])
+
+    ws_gaps.column_dimensions["A"].width = 26
+    ws_gaps.column_dimensions["B"].width = 40
+    ws_gaps.column_dimensions["C"].width = 30
+    ws_gaps.column_dimensions["D"].width = 55
+
+    ws_gaps["A1"] = "教育担当が不在で頭打ちになっている箇所と対応案"
+    ws_gaps["A1"].font = TITLE_FONT
+    ws_gaps.merge_cells("A1:D1")
+
+    ws_gaps["A3"] = "頭打ち箇所(チーム×設備の組み合わせ数)"
+    ws_gaps["A3"].font = BOLD
+    ws_gaps["B3"] = gap_report["gap_count"]
+    ws_gaps["A4"] = "実際に昇格が必要な人数"
+    ws_gaps["A4"].font = BOLD
+    ws_gaps["B4"] = need["distinct_people_needed"]
+    ws_gaps["C4"] = "(1人が同じチーム内の複数設備を兼任できるため、組み合わせ数より少なくて済む)"
+    ws_gaps["C4"].font = Font(name=FONT_NAME, italic=True, size=9)
+
+    summary_header_row = 6
+    for c, h in enumerate(["候補者", "担当する(チーム/設備)", "件数"], start=1):
+        cell = ws_gaps.cell(row=summary_header_row, column=c, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+    for i, b in enumerate(need["breakdown"]):
+        r = summary_header_row + 1 + i
+        ws_gaps.cell(row=r, column=1, value=b["candidate"])
+        ws_gaps.cell(row=r, column=2, value=", ".join(b["covers"]))
+        ws_gaps.cell(row=r, column=3, value=len(b["covers"]))
+
+    detail_start = summary_header_row + 1 + len(need["breakdown"]) + 2
+    ws_gaps.cell(row=detail_start, column=1, value="箇所ごとの対応案(3案)").font = BOLD
+    header_row2 = detail_start + 1
+    for c, h in enumerate(["チーム/設備", "案1: 内部昇格", "案2: 他チームからの応援", "案3: 常駐化+ローテーション制"], start=1):
+        cell = ws_gaps.cell(row=header_row2, column=c, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+
+    r = header_row2 + 1
+    for gap in gap_report["gaps"]:
+        resolution = gap_resolution_options(member_objs, gap)
+        opt_by_name = {o["案"]: o for o in resolution["options"]}
+        ws_gaps.cell(row=r, column=1, value=f"チーム{gap['team']} / {gap['equipment']}")
+        for col, key in zip((2, 3, 4), ("内部昇格", "他チームからの応援", "常駐化+ローテーション制")):
+            opt = opt_by_name.get(key)
+            text = opt["内容"] if opt else "(該当候補なし)"
+            cell = ws_gaps.cell(row=r, column=col, value=text)
+            cell.alignment = Alignment(wrap_text=True, vertical="top")
+        r += 1
+
+    note_row = r + 1
+    note_cell = ws_gaps.cell(
+        row=note_row, column=1,
+        value=(
+            "「常駐化+ローテーション制」は、最もスキルの高いメンバーを一時的に教育専任(常日勤)にする案。"
+            "ただし特定の1人に固定すると不公平感が出るため、対象者を数ヶ月ごとに交代する運用を想定している。"
+        ),
+    )
+    note_cell.font = Font(name=FONT_NAME, italic=True, size=9)
+    note_cell.alignment = Alignment(wrap_text=True, vertical="top")
+    ws_gaps.row_dimensions[note_row].height = 40
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     wb.save(OUT_PATH)
