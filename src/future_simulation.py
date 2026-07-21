@@ -186,6 +186,23 @@ def what_if_add_instructors(members: List[Member], roadmap: dict, promotions: Li
     }
 
 
+def distinct_promotion_need(members: List[Member], gaps: List[dict]) -> dict:
+    """頭打ち解消に必要な『組み合わせの数』と『実際に昇格させるべき人数』を分けて算出する。
+
+    1人が同じチーム内の複数設備をまとめて担当できるため、
+    (チーム×設備)の不足件数と、実際に必要な人数は一致しない。
+    """
+    suggestions = suggest_instructor_candidates(members, gaps)
+    by_person: Dict[str, List[str]] = {}
+    for s in suggestions:
+        by_person.setdefault(s["candidate"], []).append(f"{s['team']}/{s['equipment']}")
+    return {
+        "gap_count": len(gaps),
+        "distinct_people_needed": len(by_person),
+        "breakdown": [{"candidate": name, "covers": items} for name, items in by_person.items()],
+    }
+
+
 def suggest_instructor_candidates(members: List[Member], gaps: List[dict]) -> List[dict]:
     """教育担当が不在の(チーム, 設備)ごとに、最も昇格に近い候補(現在の到達段階が一番高い人)を提案する。"""
     suggestions = []
@@ -312,7 +329,11 @@ if __name__ == "__main__":
     gap_report = instructor_gap_report(members, roadmap)
     for g in gap_report["gaps"]:
         print(f"  チーム{g['team']} / {g['equipment']}: 教育担当が不在")
-    print(f"  頭打ち箇所: {gap_report['gap_count']}件 → 理論上、あと最大{gap_report['gap_count']}人の教育担当がいれば全て解消")
+    print(f"  頭打ち箇所: {gap_report['gap_count']}件(チーム×設備の組み合わせ数)")
+    need = distinct_promotion_need(members, gap_report["gaps"])
+    print(f"  ただし1人が同じチーム内の複数設備を兼任できるため、実際に昇格が必要な人数は{need['distinct_people_needed']}人")
+    for b in need["breakdown"]:
+        print(f"    {b['candidate']}: {len(b['covers'])}件担当 → {', '.join(b['covers'])}")
 
     print()
     print("=== 現状の体制での理論上限(36ヶ月シミュレーション) ===")
