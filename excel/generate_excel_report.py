@@ -1,0 +1,466 @@
+"""
+管理者向けExcelレポートの生成
+
+目的:
+  管理者への提示は使い慣れたExcel形式が望ましいという要望に応え、
+  「氏名を左列、日付を横に並べたシフト表」+「シフト健全度」を1つのExcelにまとめる。
+
+  重要: シフト健全度はハードコードされた数値ではなく、メンバーデータ(資格・
+  設備別スキル段階・バックアップ可否)からExcelの数式で自動計算する。
+  これにより「教育を進める・資格を取得する」とスコアが実際に上がることを
+  Excel上でそのまま確認でき、管理者だけでなくメンバー自身にも
+  「教育すると希望休が通りやすくなる」ことを納得してもらいやすくする狙いがある。
+
+シート構成:
+  1. シフト健全度        … 総合スコア+5指標(数式)、判定基準、今月の早番A活用状況
+  2. シフト表(2026年8月) … 氏名×日付のシフト表(現場のExcelそのままのイメージ)
+  3. 希望休申請一覧      … 各申請について、承認した場合のチーム残人数と判定
+  4. メンバーデータ      … 元データ+数値化した段階(数式のソース)
+  5. 段階マップ(非表示) … 段階名→数値の対応表
+"""
+
+from __future__ import annotations
+
+import json
+from datetime import date, timedelta
+from pathlib import Path
+
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+from openpyxl.comments import Comment
+
+BASE = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE / "data"
+OUT_PATH = BASE / "excel" / "A2EWorks_シフト健全度レポート_2026年8月.xlsx"
+
+STAGE_ORDER = ["見学", "補助", "単独", "教育担当補助", "教育担当"]
+EQUIPMENT_LIST = ["受変電設備", "空調設備", "消防設備", "監視盤"]
+ROTATION_CYCLE = ["早A", "早B", "夜", "明", "休"]
+TEAM_OFFSETS = {"A": 0, "B": 1, "C": 2, "D": 3, "E": 4}
+START_DATE = date(2026, 8, 1)
+NUM_DAYS = 31
+WEEKDAY_JP = ["月", "火", "水", "木", "金", "土", "日"]
+
+FONT_NAME = "Arial"
+
+SHIFT_FILL = {
+    "早A": PatternFill("solid", fgColor="E4D6F7"),  # 教育投資枠(紫系)
+    "早B": PatternFill("solid", fgColor="FDECC8"),  # 早番(琥珀系)
+    "夜": PatternFill("solid", fgColor="D6E4F0"),   # 夜勤(青系)
+    "明": PatternFill("solid", fgColor="E8E8E8"),   # 明け(グレー)
+    "休": PatternFill("solid", fgColor="D9F2E3"),   # 休み(緑系)
+}
+REQUEST_BORDER = Border(*(Side(style="thick", color="C0392B") for _ in range(4)))
+
+HEADER_FILL = PatternFill("solid", fgColor="2F3B4C")
+HEADER_FONT = Font(name=FONT_NAME, color="FFFFFF", bold=True)
+TITLE_FONT = Font(name=FONT_NAME, size=16, bold=True)
+BOLD = Font(name=FONT_NAME, bold=True)
+NORMAL = Font(name=FONT_NAME)
+
+
+def load_json(name):
+    with open(DATA_DIR / name, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def shift_for_team(day_index: int, team: str) -> str:
+    return ROTATION_CYCLE[(day_index + TEAM_OFFSETS[team]) % 5]
+
+
+def build_workbook():
+    members = load_json("members.json")
+    constraints = load_json("constraints.json")
+
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    ws_health = wb.create_sheet("シフト健全度")
+    ws_shift = wb.create_sheet("シフト表(2026年8月)")
+    ws_requests = wb.create_sheet("希望休申請一覧")
+    ws_members = wb.create_sheet("メンバーデータ")
+    ws_stagemap = wb.create_sheet("段階マップ")
+
+    # ---------------- 段階マップ ----------------
+    ws_stagemap["A1"] = "段階名"
+    ws_stagemap["B1"] = "数値"
+    for i, stage in enumerate(STAGE_ORDER):
+        ws_stagemap.cell(row=i + 2, column=1, value=stage)
+        ws_stagemap.cell(row=i + 2, column=2, value=i)
+    ws_stagemap.sheet_state = "hidden"
+
+    # ---------------- メンバーデータ ----------------
+    headers = [
+        "氏名", "チーム", "役職", "経験月数", "資格",
+        "受変電設備段階", "空調設備段階", "消防設備段階", "監視盤段階",
+        "バックアップ可能業務",
+        "受変電_数値", "空調_数値", "消防_数値", "監視盤_数値",
+        "いずれかで単独以上か",
+    ]
+    for c, h in enumerate(headers, start=1):
+        cell = ws_members.cell(row=1, column=c, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+    ws_members.freeze_panes = "A2"
+
+    for r, m in enumerate(members, start=2):
+        ws_members.cell(row=r, column=1, value=m["name"])
+        ws_members.cell(row=r, column=2, value=m["team"])
+        ws_members.cell(row=r, column=3, value=m["role"])
+        ws_members.cell(row=r, column=4, value=m["experience_months"])
+        ws_members.cell(row=r, column=5, value=", ".join(m["certifications"]))
+        for ci, eq in enumerate(EQUIPMENT_LIST):
+            ws_members.cell(row=r, column=6 + ci, value=m["equipment_skills"].get(eq, ""))
+        ws_members.cell(row=r, column=10, value=", ".join(m["backup_capable_tasks"]))
+        # 数値化(段階マップをVLOOKUP)
+        for ci, col_letter in zip(range(4), ["F", "G", "H", "I"]):
+            out_col = 11 + ci
+            ws_members.cell(
+                row=r, column=out_col,
+                value=f"=VLOOKUP({col_letter}{r},段階マップ!$A:$B,2,FALSE)"
+            )
+        ws_members.cell(row=r, column=15, value=f"=IF(MAX(K{r}:N{r})>=2,1,0)")
+
+    last_member_row = len(members) + 1  # 16
+
+    for col_idx in range(1, 16):
+        ws_members.column_dimensions[get_column_letter(col_idx)].width = 14
+
+    # ---------------- シフト表(2026年8月) ----------------
+    ws_shift["A1"] = "氏名"
+    ws_shift["B1"] = "チーム"
+    ws_shift["C1"] = "役職"
+    for c in ("A1", "B1", "C1"):
+        ws_shift[c].font = HEADER_FONT
+        ws_shift[c].fill = HEADER_FILL
+
+    date_col_start = 4
+    for i in range(NUM_DAYS):
+        d = START_DATE + timedelta(days=i)
+        col = date_col_start + i
+        cell = ws_shift.cell(row=1, column=col, value=d)
+        cell.number_format = 'm/d("' + WEEKDAY_JP[d.weekday()] + '")'
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+        cell.alignment = Alignment(horizontal="center")
+        ws_shift.column_dimensions[get_column_letter(col)].width = 6
+
+    count_col = date_col_start + NUM_DAYS  # 早A回数列
+    hdr = ws_shift.cell(row=1, column=count_col, value="早A回数(今月)")
+    hdr.font = HEADER_FONT
+    hdr.fill = HEADER_FILL
+    ws_shift.column_dimensions[get_column_letter(count_col)].width = 14
+
+    requested_days_off = constraints.get("requested_days_off", {})
+    member_id_to_name = {}
+    members_by_name = {}
+    for m in members:
+        member_id_to_name[m["member_id"]] = m["name"]
+        members_by_name[m["name"]] = m
+
+    requested_dates_by_name = {}
+    for mid, dates in requested_days_off.items():
+        requested_dates_by_name[member_id_to_name[mid]] = set(dates)
+
+    for r, m in enumerate(members, start=2):
+        ws_shift.cell(row=r, column=1, value=m["name"])
+        ws_shift.cell(row=r, column=2, value=m["team"])
+        ws_shift.cell(row=r, column=3, value=m["role"])
+        req_dates = requested_dates_by_name.get(m["name"], set())
+        for i in range(NUM_DAYS):
+            d = START_DATE + timedelta(days=i)
+            code = shift_for_team(i, m["team"])
+            cell = ws_shift.cell(row=r, column=date_col_start + i, value=code)
+            cell.fill = SHIFT_FILL[code]
+            cell.font = NORMAL
+            cell.alignment = Alignment(horizontal="center")
+            if d.isoformat() in req_dates:
+                cell.border = REQUEST_BORDER
+                cell.comment = Comment("希望休の申請あり", "A2E Works")
+        first_col_letter = get_column_letter(date_col_start)
+        last_col_letter = get_column_letter(date_col_start + NUM_DAYS - 1)
+        ws_shift.cell(
+            row=r, column=count_col,
+            value=f'=COUNTIF({first_col_letter}{r}:{last_col_letter}{r},"早A")'
+        )
+
+    ws_shift.freeze_panes = get_column_letter(date_col_start) + "2"
+
+    legend_row = last_member_row + 2
+    ws_shift.cell(row=legend_row, column=1, value="凡例:").font = BOLD
+    legend_items = [
+        ("早A", "早番A(教育投資枠)"), ("早B", "早番B"), ("夜", "夜勤"),
+        ("明", "明け"), ("休", "休み"),
+    ]
+    for i, (code, label) in enumerate(legend_items):
+        cell = ws_shift.cell(row=legend_row + 1 + i, column=1, value=code)
+        cell.fill = SHIFT_FILL[code]
+        cell.alignment = Alignment(horizontal="center")
+        ws_shift.cell(row=legend_row + 1 + i, column=2, value=label).font = NORMAL
+    ws_shift.cell(row=legend_row + 1 + len(legend_items), column=1, value="太赤枠").font = BOLD
+    ws_shift.cell(row=legend_row + 1 + len(legend_items), column=2, value="希望休の申請あり").font = NORMAL
+
+    # ---------------- 希望休申請一覧 ----------------
+    ws_requests["A1"] = "現在のシフト健全度:"
+    ws_requests["A1"].font = BOLD
+    ws_requests["B1"] = "=シフト健全度!C3"
+    ws_requests["B1"].font = BOLD
+    ws_requests["C1"] = "=シフト健全度!C4"
+
+    req_headers = ["氏名", "チーム", "希望日", "理由", "割当中のシフト", "承認後のチーム残(単独対応可能)人数", "判定"]
+    header_row = 3
+    for c, h in enumerate(req_headers, start=1):
+        cell = ws_requests.cell(row=header_row, column=c, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+    ws_requests.column_dimensions["A"].width = 14
+    ws_requests.column_dimensions["D"].width = 16
+    ws_requests.column_dimensions["F"].width = 30
+    ws_requests.column_dimensions["G"].width = 26
+
+    shift_first_col_letter = get_column_letter(date_col_start)
+    shift_last_col_letter = get_column_letter(date_col_start + NUM_DAYS - 1)
+
+    row = header_row + 1
+    for mid, dates in requested_days_off.items():
+        name = member_id_to_name[mid]
+        for d_str in dates:
+            ws_requests.cell(row=row, column=1, value=name)
+            ws_requests.cell(row=row, column=2, value=f"=VLOOKUP(A{row},メンバーデータ!$A:$B,2,FALSE)")
+            date_cell = ws_requests.cell(row=row, column=3, value=date.fromisoformat(d_str))
+            d_obj = date.fromisoformat(d_str)
+            date_cell.number_format = 'm/d("' + WEEKDAY_JP[d_obj.weekday()] + '")'
+            ws_requests.cell(row=row, column=4, value="(初期データ)")
+            ws_requests.cell(
+                row=row, column=5,
+                value=(
+                    f"=INDEX('シフト表(2026年8月)'!${shift_first_col_letter}$2:${shift_last_col_letter}$16,"
+                    f"MATCH($A{row},'シフト表(2026年8月)'!$A$2:$A$16,0),"
+                    f"MATCH($C{row},'シフト表(2026年8月)'!${shift_first_col_letter}$1:${shift_last_col_letter}$1,0))"
+                )
+            )
+            ws_requests.cell(
+                row=row, column=6,
+                value=f"=SUMIFS(メンバーデータ!$O:$O,メンバーデータ!$B:$B,B{row})-VLOOKUP(A{row},メンバーデータ!$A:$O,15,FALSE)"
+            )
+            ws_requests.cell(
+                row=row, column=7,
+                value=f'=IF(F{row}>=2,"バックアップ不要",IF(F{row}=1,"要注意(イベント時はバックアップ検討)","バックアップ出動が必要"))'
+            )
+            row += 1
+
+    note_row = row + 1
+    ws_requests.cell(row=note_row, column=1,
+                      value="※「承認後のチーム残人数」は、そのチームで設備を単独対応以上でこなせる人数から、申請者本人の分を除いた人数です。").font = Font(name=FONT_NAME, italic=True, size=9)
+
+    # ---------------- シフト健全度 ----------------
+    ws_health.column_dimensions["A"].width = 26
+    ws_health.column_dimensions["B"].width = 16
+    ws_health.column_dimensions["C"].width = 16
+    ws_health.column_dimensions["D"].width = 16
+
+    ws_health["A1"] = "シフト健全度レポート(2026年8月時点)"
+    ws_health["A1"].font = TITLE_FONT
+    ws_health.merge_cells("A1:D1")
+
+    metric_cells = {
+        "教育達成率": None,
+        "属人化耐性": None,
+        "資格充足率": None,
+        "バックアップ率": None,
+        "変更耐性": None,
+    }
+
+    # 各セクションの開始行を固定値で予約し、重なりが絶対に起きないようにする。
+    EQ_LABEL_ROW = 15
+    EQ_HEADER_ROW = 16
+    EQ_DATA_START = 17          # 17-20 (4設備)
+    DEPENDENCY_OVERALL_ROW = 21
+
+    TEAM_LABEL_ROW = 23
+    TEAM_HEADER_ROW = 24
+    TEAM_DATA_START = 25        # 25-29 (5チーム)
+    RESILIENCE_OVERALL_ROW = 30
+
+    QUAL_LABEL_ROW = 32
+    QUAL_HEADER_ROW = 33
+    QUAL_DATA_START = 34        # 34-36 (3設備)
+    QUAL_OVERALL_ROW = 37
+
+    SIMPLE_ROW = 39             # 教育達成率
+    SIMPLE_ROW2 = 40            # バックアップ率
+
+    # --- 内訳: 属人化耐性(設備別) ---
+    ws_health.cell(row=EQ_LABEL_ROW, column=1, value="属人化耐性 内訳(設備別: 単独対応以上の人数)").font = BOLD
+    for c, h in enumerate(["設備", "人数", "スコア"], start=1):
+        cell = ws_health.cell(row=EQ_HEADER_ROW, column=c, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+
+    eq_col_map = {"受変電設備": "K", "空調設備": "L", "消防設備": "M", "監視盤": "N"}
+    eq_score_cells = []
+    for i, eq in enumerate(EQUIPMENT_LIST):
+        r = EQ_DATA_START + i
+        col_letter = eq_col_map[eq]
+        ws_health.cell(row=r, column=1, value=eq)
+        count_formula = f'=COUNTIF(メンバーデータ!{col_letter}2:{col_letter}{last_member_row},">=2")'
+        ws_health.cell(row=r, column=2, value=count_formula)
+        score_formula = f"=MIN(B{r},3)/3*100"
+        ws_health.cell(row=r, column=3, value=score_formula)
+        eq_score_cells.append(f"C{r}")
+
+    ws_health.cell(row=DEPENDENCY_OVERALL_ROW, column=1, value="属人化耐性(総合)").font = BOLD
+    ws_health.cell(row=DEPENDENCY_OVERALL_ROW, column=3, value=f"=AVERAGE({','.join(eq_score_cells)})")
+    metric_cells["属人化耐性"] = f"C{DEPENDENCY_OVERALL_ROW}"
+
+    # --- 内訳: 変更耐性(チーム別) ---
+    ws_health.cell(row=TEAM_LABEL_ROW, column=1, value="変更耐性 内訳(チーム別: 単独対応可能人数)").font = BOLD
+    for c, h in enumerate(["チーム", "単独対応可能人数", "チーム人数", "スコア"], start=1):
+        cell = ws_health.cell(row=TEAM_HEADER_ROW, column=c, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+
+    team_score_cells = []
+    for i, team in enumerate(["A", "B", "C", "D", "E"]):
+        r = TEAM_DATA_START + i
+        ws_health.cell(row=r, column=1, value=team)
+        ws_health.cell(row=r, column=2, value=f'=SUMIFS(メンバーデータ!$O:$O,メンバーデータ!$B:$B,"{team}")')
+        ws_health.cell(row=r, column=3, value=f'=COUNTIF(メンバーデータ!$B:$B,"{team}")')
+        ws_health.cell(row=r, column=4, value=f"=MIN(B{r},2)/2*100")
+        team_score_cells.append(f"D{r}")
+
+    ws_health.cell(row=RESILIENCE_OVERALL_ROW, column=1, value="変更耐性(総合)").font = BOLD
+    ws_health.cell(row=RESILIENCE_OVERALL_ROW, column=4, value=f"=AVERAGE({','.join(team_score_cells)})")
+    metric_cells["変更耐性"] = f"D{RESILIENCE_OVERALL_ROW}"
+
+    # --- 資格充足率(計算用ワーク行) ---
+    ws_health.cell(row=QUAL_LABEL_ROW, column=1, value="資格充足率 内訳(単独対応以上かつ必要資格を保有)").font = BOLD
+    for c, h in enumerate(["設備", "対象人数", "資格保有人数"], start=1):
+        cell = ws_health.cell(row=QUAL_HEADER_ROW, column=c, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+
+    qual_defs = [
+        ("受変電設備", "K", ["第二種電気工事士"]),
+        ("空調設備", "L", ["第一種冷凍機械責任者", "第三種冷凍機械責任者"]),
+        ("消防設備", "M", ["危険物取扱者乙4"]),
+    ]
+    total_check_cells = []
+    satisfied_cells = []
+    for i, (eq, col_letter, certs) in enumerate(qual_defs):
+        r = QUAL_DATA_START + i
+        ws_health.cell(row=r, column=1, value=eq)
+        total_formula = f'=COUNTIF(メンバーデータ!{col_letter}2:{col_letter}{last_member_row},">=2")'
+        ws_health.cell(row=r, column=2, value=total_formula)
+        cert_terms = "+".join(
+            f'ISNUMBER(SEARCH("{c}",メンバーデータ!$E$2:$E${last_member_row}))' for c in certs
+        )
+        satisfied_formula = (
+            f"=SUMPRODUCT((メンバーデータ!{col_letter}$2:{col_letter}${last_member_row}>=2)*"
+            f"(({cert_terms})>0))"
+        )
+        ws_health.cell(row=r, column=3, value=satisfied_formula)
+        total_check_cells.append(f"B{r}")
+        satisfied_cells.append(f"C{r}")
+
+    ws_health.cell(row=QUAL_OVERALL_ROW, column=1, value="資格充足率(総合)").font = BOLD
+    ws_health.cell(row=QUAL_OVERALL_ROW, column=2, value=f"=SUM({','.join(total_check_cells)})")
+    ws_health.cell(row=QUAL_OVERALL_ROW, column=3, value=f"=SUM({','.join(satisfied_cells)})")
+    ws_health.cell(row=QUAL_OVERALL_ROW, column=4, value=f"=C{QUAL_OVERALL_ROW}/B{QUAL_OVERALL_ROW}*100")
+    metric_cells["資格充足率"] = f"D{QUAL_OVERALL_ROW}"
+
+    # --- 教育達成率・バックアップ率(単純な集計) ---
+    ws_health.cell(row=SIMPLE_ROW, column=1, value="教育達成率").font = BOLD
+    ws_health.cell(row=SIMPLE_ROW, column=2,
+                   value=f"=AVERAGE(メンバーデータ!K2:N{last_member_row})/4*100")
+    metric_cells["教育達成率"] = f"B{SIMPLE_ROW}"
+
+    ws_health.cell(row=SIMPLE_ROW2, column=1, value="バックアップ率").font = BOLD
+    ws_health.cell(row=SIMPLE_ROW2, column=2,
+                   value=f'=COUNTIF(メンバーデータ!J2:J{last_member_row},"?*")/COUNTA(メンバーデータ!A2:A{last_member_row})*100')
+    metric_cells["バックアップ率"] = f"B{SIMPLE_ROW2}"
+
+    # --- 指標別サマリー表(row6: 見出し, row7-11: 5指標, row13: 総合) ---
+    table_header_row = 6
+    ws_health.cell(row=table_header_row, column=1, value="指標").font = HEADER_FONT
+    ws_health.cell(row=table_header_row, column=1).fill = HEADER_FILL
+    ws_health.cell(row=table_header_row, column=2, value="スコア").font = HEADER_FONT
+    ws_health.cell(row=table_header_row, column=2).fill = HEADER_FILL
+
+    metric_order = ["教育達成率", "属人化耐性", "資格充足率", "バックアップ率", "変更耐性"]
+    metric_start_row = table_header_row + 1  # 7
+    for i, name in enumerate(metric_order):
+        r = metric_start_row + i
+        ws_health.cell(row=r, column=1, value=name).font = NORMAL
+        ws_health.cell(row=r, column=2, value=f"={metric_cells[name]}")
+
+    overall_row = metric_start_row + len(metric_order) + 1  # 13
+    ws_health.cell(row=overall_row, column=1, value="総合健全度スコア").font = Font(name=FONT_NAME, bold=True, size=13)
+    overall_formula = "=AVERAGE(" + ",".join(f"B{metric_start_row + i}" for i in range(len(metric_order))) + ")"
+    ws_health.cell(row=overall_row, column=2, value=overall_formula).font = Font(name=FONT_NAME, bold=True, size=13)
+
+    # --- 総合スコア・判定のクイック表示(row3-4、上の表と行が重ならない位置) ---
+    ws_health.cell(row=3, column=1, value="総合健全度スコア").font = BOLD
+    ws_health.cell(row=3, column=3, value=f"=B{overall_row}").font = Font(name=FONT_NAME, bold=True, size=20)
+    ws_health.cell(row=4, column=1, value="判定").font = BOLD
+    ws_health.cell(row=4, column=3,
+                   value='=IF(C3>=80,"安全:突発休暇があっても対応可能",IF(C3>=60,"要注意:イベント重複時は厳しい可能性","要対応:バックアップ確保が必要"))')
+
+    # --- 今月の早番A(教育投資枠)活用回数(チーム別) ---
+    investA_row = 42  # SIMPLE_ROW2(40)より後
+    ws_health.cell(row=investA_row, column=1, value="今月の早番A(教育投資枠)活用回数(チーム別)").font = BOLD
+    for c, h in enumerate(["チーム", "早A回数(今月)"], start=1):
+        cell = ws_health.cell(row=investA_row + 1, column=c, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+    for i, team in enumerate(["A", "B", "C", "D", "E"]):
+        r = investA_row + 2 + i
+        ws_health.cell(row=r, column=1, value=team)
+        ws_health.cell(
+            row=r, column=2,
+            value=(
+                f'=AVERAGEIF(\'シフト表(2026年8月)\'!$B$2:$B${last_member_row},"{team}",'
+                f"'シフト表(2026年8月)'!${get_column_letter(count_col)}$2:${get_column_letter(count_col)}${last_member_row})"
+            )
+        )
+
+    # --- 判定基準の説明 ---
+    band_row = investA_row + 2 + 5 + 2
+    ws_health.cell(row=band_row, column=1, value="判定基準").font = BOLD
+    for c, h in enumerate(["スコア帯", "意味"], start=1):
+        cell = ws_health.cell(row=band_row + 1, column=c, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+    bands = [
+        ("80以上", "突発休暇が出ても、現状の体制で対応可能"),
+        ("60〜79", "通常は対応可能。ただしイベント(点検・試験等)が重なる場合は要注意"),
+        ("60未満", "事前にバックアップ要員の確保・出動が必要"),
+    ]
+    for i, (rng, meaning) in enumerate(bands):
+        r = band_row + 2 + i
+        ws_health.cell(row=r, column=1, value=rng)
+        ws_health.cell(row=r, column=2, value=meaning)
+        ws_health.column_dimensions["B"].width = 46
+
+    # --- 教育とシフト健全度・希望休の関係についての説明 ---
+    note_row2 = band_row + 2 + len(bands) + 2
+    note_text = (
+        "教育・資格取得を進めるほど「単独対応できる人」が増え、属人化耐性・資格充足率が上がり、"
+        "シフト健全度全体が向上します。健全度が高いほど、突発的な欠勤や希望休があってもバックアップで"
+        "対応でき、結果として希望休を安心して承認しやすくなります。\n"
+        "今月どれだけ早番A(教育投資枠)を教育に充てたかが、3〜6ヶ月後の健全度に直結します"
+        "(3ヶ月後・6ヶ月後・1年後の予測はSTEP7で追加予定)。"
+    )
+    note_cell = ws_health.cell(row=note_row2, column=1, value=note_text)
+    note_cell.alignment = Alignment(wrap_text=True, vertical="top")
+    note_cell.font = Font(name=FONT_NAME, italic=True, size=10)
+    ws_health.row_dimensions[note_row2].height = 60
+
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(OUT_PATH)
+    print(f"保存しました: {OUT_PATH}")
+
+
+if __name__ == "__main__":
+    build_workbook()
