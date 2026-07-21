@@ -46,12 +46,7 @@
 - [x] STEP5 仮想シフト作成
 - [x] STEP6 ダッシュボード
 - [x] STEP7 未来シミュレーション
-- [ ] STEP8 README・GitHub公開(仕上げ)
-- [ ] STEP4 シフト健全度計算設計
-- [ ] STEP5 仮想シフト作成
-- [ ] STEP6 ダッシュボード
-- [ ] STEP7 未来シミュレーション
-- [ ] STEP8 README・GitHub公開
+- [x] STEP8 README・GitHub公開(仕上げ)
 
 ## ディレクトリ構成
 
@@ -66,17 +61,17 @@ a2e-works/
 │   └── shift_schedule.json      # STEP5: 2026年8月分の仮想シフト(5チームローテーション)
 ├── src/
 │   ├── members.py                # STEP1: メンバーのデータモデル(dataclass)と読み込みロジック
-│   ├── education.py              # STEP2: 昇格条件の判定ロジック(誰が次段階に近いか)
-│   ├── constraints.py            # STEP3: 制約条件のチェックロジック(資格ギャップ・NG/推奨ペア等)
-│   ├── health_score.py           # STEP4: シフト健全度スコアの算出ロジック
-│   ├── shift_schedule.py         # STEP5: 仮想シフト生成+希望休/夜勤上限/NGペアとの衝突検出
-│   └── future_simulation.py      # STEP7: 未来シミュレーション(頭打ち検出・増員案・退職リスク判定)
-└── scripts/
-    └── generate_demo_experience_counts.py  # デモ用の実績回数を自動生成するツール
+│   ├── education.py               # STEP2: 昇格条件の判定ロジック(誰が次段階に近いか)
+│   ├── constraints.py             # STEP3: 制約条件のチェックロジック(資格ギャップ・NG/推奨ペア等)
+│   ├── health_score.py            # STEP4: シフト健全度スコアの算出ロジック
+│   ├── shift_schedule.py          # STEP5: 仮想シフト生成+希望休/夜勤上限/NGペアとの衝突検出
+│   └── future_simulation.py       # STEP7: 未来シミュレーション(頭打ち検出・増員案・退職リスク判定)
+├── scripts/
+│   └── generate_demo_experience_counts.py  # デモ用の実績回数を自動生成するツール
 ├── dashboard/
-    └── ShiftDashboard.jsx                  # STEP6: メンバー/管理者ダッシュボード(Reactアーティファクト)
-├── excel/
-    ├── generate_excel_report.py            # 管理者向けExcel(シフト表+シフト健全度)の生成スクリプト
+│   └── ShiftDashboard.jsx         # STEP6: メンバー/管理者ダッシュボード(Reactアーティファクト)
+└── excel/
+    ├── generate_excel_report.py   # 管理者向けExcel(シフト表+シフト健全度)の生成スクリプト
     └── A2EWorks_シフト健全度レポート_2026年8月.xlsx  # 生成されたExcelレポート本体
 ```
 
@@ -235,3 +230,19 @@ Excelレポート(`excel/generate_excel_report.py`)を追加した。
 このロジックは `excel/generate_excel_report.py` の「頭打ち箇所と対応案」シートにも
 反映しており、13件の不足箇所それぞれについて3案(内部昇格/他チーム応援/常駐化+
 ローテーション制)と、実際に必要な昇格人数(5人)の一覧をExcel上で確認できる。
+
+## 現時点の制約(V1の範囲)
+
+- データはすべて架空のデモデータ(15名/設備保全センター)。実在の組織データとの連携は未実装。
+- `dashboard/ShiftDashboard.jsx` はClaudeのアーティファクト上で動くプロトタイプであり、
+  認証・複数拠点対応・通知機能などは持たない。
+- 希望休の承認後、代替要員を自動で割り当てる機能はない(管理者が手動で調整する想定)。
+- 未来シミュレーション(STEP7)は「教育担当同乗の早番Aのみ進捗」という単純化したモデルであり、
+  実際の停電試験・法定点検の発生頻度などは考慮していない。
+
+## V2以降の構想(原資料セクション13)
+
+人員不足時に「人が足りません」で終わらせず、複数案(リーダーのみ変則シフト/教育延期/
+応援依頼/採用/残業増)を提示し、それぞれのシフト健全度・教育への影響・属人化・コスト・
+残業時間を比較して管理者が選べるようにする、という構想。今回追加した
+「頭打ち箇所への3つの対応案」はその最初の実装例にあたる。
