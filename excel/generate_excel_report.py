@@ -218,6 +218,7 @@ def build_workbook():
     ws_requests["A1"].font = BOLD
     ws_requests["B1"] = "=シフト健全度!C3"
     ws_requests["B1"].font = BOLD
+    ws_requests["B1"].number_format = "0.0"
     ws_requests["C1"] = "=シフト健全度!C4"
 
     req_headers = ["氏名", "チーム", "希望日", "理由", "割当中のシフト", "承認後のチーム残(単独対応可能)人数", "判定"]
@@ -319,11 +320,13 @@ def build_workbook():
         count_formula = f'=COUNTIF(メンバーデータ!{col_letter}2:{col_letter}{last_member_row},">=2")'
         ws_health.cell(row=r, column=2, value=count_formula)
         score_formula = f"=MIN(B{r},3)/3*100"
-        ws_health.cell(row=r, column=3, value=score_formula)
+        score_cell = ws_health.cell(row=r, column=3, value=score_formula)
+        score_cell.number_format = "0.0"
         eq_score_cells.append(f"C{r}")
 
     ws_health.cell(row=DEPENDENCY_OVERALL_ROW, column=1, value="属人化耐性(総合)").font = BOLD
-    ws_health.cell(row=DEPENDENCY_OVERALL_ROW, column=3, value=f"=AVERAGE({','.join(eq_score_cells)})")
+    dep_overall_cell = ws_health.cell(row=DEPENDENCY_OVERALL_ROW, column=3, value=f"=AVERAGE({','.join(eq_score_cells)})")
+    dep_overall_cell.number_format = "0.0"
     metric_cells["属人化耐性"] = f"C{DEPENDENCY_OVERALL_ROW}"
 
     # --- 内訳: 変更耐性(チーム別) ---
@@ -339,11 +342,13 @@ def build_workbook():
         ws_health.cell(row=r, column=1, value=team)
         ws_health.cell(row=r, column=2, value=f'=SUMIFS(メンバーデータ!$O:$O,メンバーデータ!$B:$B,"{team}")')
         ws_health.cell(row=r, column=3, value=f'=COUNTIF(メンバーデータ!$B:$B,"{team}")')
-        ws_health.cell(row=r, column=4, value=f"=MIN(B{r},2)/2*100")
+        score_cell2 = ws_health.cell(row=r, column=4, value=f"=MIN(B{r},2)/2*100")
+        score_cell2.number_format = "0.0"
         team_score_cells.append(f"D{r}")
 
     ws_health.cell(row=RESILIENCE_OVERALL_ROW, column=1, value="変更耐性(総合)").font = BOLD
-    ws_health.cell(row=RESILIENCE_OVERALL_ROW, column=4, value=f"=AVERAGE({','.join(team_score_cells)})")
+    res_overall_cell = ws_health.cell(row=RESILIENCE_OVERALL_ROW, column=4, value=f"=AVERAGE({','.join(team_score_cells)})")
+    res_overall_cell.number_format = "0.0"
     metric_cells["変更耐性"] = f"D{RESILIENCE_OVERALL_ROW}"
 
     # --- 資格充足率(計算用ワーク行) ---
@@ -379,18 +384,18 @@ def build_workbook():
     ws_health.cell(row=QUAL_OVERALL_ROW, column=1, value="資格充足率(総合)").font = BOLD
     ws_health.cell(row=QUAL_OVERALL_ROW, column=2, value=f"=SUM({','.join(total_check_cells)})")
     ws_health.cell(row=QUAL_OVERALL_ROW, column=3, value=f"=SUM({','.join(satisfied_cells)})")
-    ws_health.cell(row=QUAL_OVERALL_ROW, column=4, value=f"=C{QUAL_OVERALL_ROW}/B{QUAL_OVERALL_ROW}*100")
+    ws_health.cell(row=QUAL_OVERALL_ROW, column=4, value=f"=C{QUAL_OVERALL_ROW}/B{QUAL_OVERALL_ROW}*100").number_format = "0.0"
     metric_cells["資格充足率"] = f"D{QUAL_OVERALL_ROW}"
 
     # --- 教育達成率・バックアップ率(単純な集計) ---
     ws_health.cell(row=SIMPLE_ROW, column=1, value="教育達成率").font = BOLD
     ws_health.cell(row=SIMPLE_ROW, column=2,
-                   value=f"=AVERAGE(メンバーデータ!K2:N{last_member_row})/4*100")
+                   value=f"=AVERAGE(メンバーデータ!K2:N{last_member_row})/4*100").number_format = "0.0"
     metric_cells["教育達成率"] = f"B{SIMPLE_ROW}"
 
     ws_health.cell(row=SIMPLE_ROW2, column=1, value="バックアップ率").font = BOLD
     ws_health.cell(row=SIMPLE_ROW2, column=2,
-                   value=f'=COUNTIF(メンバーデータ!J2:J{last_member_row},"?*")/COUNTA(メンバーデータ!A2:A{last_member_row})*100')
+                   value=f'=COUNTIF(メンバーデータ!J2:J{last_member_row},"?*")/COUNTA(メンバーデータ!A2:A{last_member_row})*100').number_format = "0.0"
     metric_cells["バックアップ率"] = f"B{SIMPLE_ROW2}"
 
     # --- 指標別サマリー表(row6: 見出し, row7-11: 5指標, row13: 総合) ---
@@ -405,16 +410,20 @@ def build_workbook():
     for i, name in enumerate(metric_order):
         r = metric_start_row + i
         ws_health.cell(row=r, column=1, value=name).font = NORMAL
-        ws_health.cell(row=r, column=2, value=f"={metric_cells[name]}")
+        ws_health.cell(row=r, column=2, value=f"={metric_cells[name]}").number_format = "0.0"
 
     overall_row = metric_start_row + len(metric_order) + 1  # 13
     ws_health.cell(row=overall_row, column=1, value="総合健全度スコア").font = Font(name=FONT_NAME, bold=True, size=13)
     overall_formula = "=AVERAGE(" + ",".join(f"B{metric_start_row + i}" for i in range(len(metric_order))) + ")"
-    ws_health.cell(row=overall_row, column=2, value=overall_formula).font = Font(name=FONT_NAME, bold=True, size=13)
+    overall_cell = ws_health.cell(row=overall_row, column=2, value=overall_formula)
+    overall_cell.font = Font(name=FONT_NAME, bold=True, size=13)
+    overall_cell.number_format = "0.0"
 
     # --- 総合スコア・判定のクイック表示(row3-4、上の表と行が重ならない位置) ---
     ws_health.cell(row=3, column=1, value="総合健全度スコア").font = BOLD
-    ws_health.cell(row=3, column=3, value=f"=B{overall_row}").font = Font(name=FONT_NAME, bold=True, size=20)
+    quick_cell = ws_health.cell(row=3, column=3, value=f"=B{overall_row}")
+    quick_cell.font = Font(name=FONT_NAME, bold=True, size=20)
+    quick_cell.number_format = "0.0"
     ws_health.cell(row=4, column=1, value="判定").font = BOLD
     ws_health.cell(row=4, column=3,
                    value='=IF(C3>=80,"安全:突発休暇があっても対応可能",IF(C3>=60,"要注意:イベント重複時は厳しい可能性","要対応:バックアップ確保が必要"))')
@@ -479,10 +488,11 @@ def build_workbook():
     ws_gaps.column_dimensions["B"].width = 40
     ws_gaps.column_dimensions["C"].width = 30
     ws_gaps.column_dimensions["D"].width = 55
+    ws_gaps.column_dimensions["E"].width = 55
 
     ws_gaps["A1"] = "教育担当が不在で頭打ちになっている箇所と対応案"
     ws_gaps["A1"].font = TITLE_FONT
-    ws_gaps.merge_cells("A1:D1")
+    ws_gaps.merge_cells("A1:E1")
 
     ws_gaps["A3"] = "頭打ち箇所(チーム×設備の組み合わせ数)"
     ws_gaps["A3"].font = BOLD
@@ -507,7 +517,7 @@ def build_workbook():
     detail_start = summary_header_row + 1 + len(need["breakdown"]) + 2
     ws_gaps.cell(row=detail_start, column=1, value="箇所ごとの対応案(3案)").font = BOLD
     header_row2 = detail_start + 1
-    for c, h in enumerate(["チーム/設備", "案1: 内部昇格", "案2: 他チームからの応援", "案3: 常駐化+ローテーション制"], start=1):
+    for c, h in enumerate(["チーム/設備", "案1: 内部昇格", "案2: 他チームからの応援", "案3: 常駐化+ローテーション制", "案4: チーム編成の見直し(異動)"], start=1):
         cell = ws_gaps.cell(row=header_row2, column=c, value=h)
         cell.font = HEADER_FONT
         cell.fill = HEADER_FILL
@@ -517,7 +527,7 @@ def build_workbook():
         resolution = gap_resolution_options(member_objs, gap)
         opt_by_name = {o["案"]: o for o in resolution["options"]}
         ws_gaps.cell(row=r, column=1, value=f"チーム{gap['team']} / {gap['equipment']}")
-        for col, key in zip((2, 3, 4), ("内部昇格", "他チームからの応援", "常駐化+ローテーション制")):
+        for col, key in zip((2, 3, 4, 5), ("内部昇格", "他チームからの応援", "常駐化+ローテーション制", "チーム編成の見直し(異動)")):
             opt = opt_by_name.get(key)
             text = opt["内容"] if opt else "(該当候補なし)"
             cell = ws_gaps.cell(row=r, column=col, value=text)

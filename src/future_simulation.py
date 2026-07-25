@@ -235,8 +235,29 @@ def find_instructor_teams(members: List[Member], equipment: str) -> List[dict]:
     return result
 
 
+def suggest_team_reassignment(members: List[Member], gap: dict) -> List[dict]:
+    """頭打ち箇所について、他チームの教育担当を恒久的に異動させる案の候補を探す。
+
+    異動元チームがその設備の対応力を失わずに済むか(他に単独対応以上の人が残るか)を
+    合わせて判定する。将来的な『チーム編成の見直し』提案の土台となる関数。
+    """
+    team, equipment = gap["team"], gap["equipment"]
+    candidates = []
+    for m in members:
+        if m.equipment_skills.get(equipment) == "教育担当" and m.team != team:
+            origin_team_members = [x for x in members if x.team == m.team and x.member_id != m.member_id]
+            origin_still_covered = any(
+                _stage_index(x.equipment_skills.get(equipment, "見学")) >= _stage_index("単独")
+                for x in origin_team_members
+            )
+            candidates.append(
+                {"name": m.name, "from_team": m.team, "origin_team_still_covered": origin_still_covered}
+            )
+    return candidates
+
+
 def gap_resolution_options(members: List[Member], gap: dict) -> dict:
-    """教育担当が不在の(チーム, 設備)について、対応案を3つ提示する。
+    """教育担当が不在の(チーム, 設備)について、対応案を提示する。
 
     原資料セクション13(V2構想: 複数案を提示し管理者が選ぶ)の考え方を、
     『教育担当不在』という具体的な状況に当てはめたもの。
@@ -286,7 +307,32 @@ def gap_resolution_options(members: List[Member], gap: dict) -> dict:
             "留意点": "交代の仕組み・引き継ぎのルール作りが必要",
         }
 
-    return {"team": team, "equipment": equipment, "options": [o for o in (option_a, option_b, option_c) if o]}
+    option_d = None
+    reassignment_candidates = suggest_team_reassignment(members, gap)
+    if reassignment_candidates:
+        safe = [c for c in reassignment_candidates if c["origin_team_still_covered"]]
+        if safe:
+            c = safe[0]
+            option_d = {
+                "案": "チーム編成の見直し(異動)",
+                "内容": f"{c['name']}(チーム{c['from_team']})を チーム{team} へ恒久的に異動する。異動元(チーム{c['from_team']})には他に単独対応以上の人が残るため、教育体制は維持される",
+                "メリット": "応援と違い恒久的な解決になり、翌月以降ずっと教育が進む",
+                "留意点": "異動対象者本人の負担・生活環境の変化への配慮が必要",
+            }
+        else:
+            c = reassignment_candidates[0]
+            option_d = {
+                "案": "チーム編成の見直し(異動)",
+                "内容": f"{c['name']}(チーム{c['from_team']})を チーム{team} へ異動する案もあるが、異動元(チーム{c['from_team']})の教育体制が手薄になるため単独では非推奨",
+                "メリット": "恒久的な解決になりうる",
+                "留意点": "異動元チームに新たな頭打ちが生まれるため、内部昇格と組み合わせて検討する必要がある",
+            }
+
+    return {
+        "team": team,
+        "equipment": equipment,
+        "options": [o for o in (option_a, option_b, option_c, option_d) if o],
+    }
 
 
 def succession_risk(members: List[Member], role: str, team: str, months_until_departure: int) -> dict:
