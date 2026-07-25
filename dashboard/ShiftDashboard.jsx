@@ -9,6 +9,10 @@ import {
   UserCircle2,
   ShieldCheck,
   Moon,
+  TrendingUp,
+  ChevronDown,
+  ChevronUp,
+  Wrench,
 } from "lucide-react";
 
 /**
@@ -26,6 +30,8 @@ import {
 
 // ---- STEP1〜5で生成したデータ(2026年8月分のデモ) ----
 const DATA = {"members": [{"id": "M01", "name": "佐藤 一郎", "team": "A", "role": "リーダー"}, {"id": "M02", "name": "鈴木 次郎", "team": "B", "role": "リーダー"}, {"id": "M03", "name": "高橋 三郎", "team": "C", "role": "リーダー"}, {"id": "M04", "name": "田中 誠", "team": "A", "role": "中堅"}, {"id": "M05", "name": "伊藤 健太", "team": "B", "role": "中堅"}, {"id": "M06", "name": "渡辺 修", "team": "C", "role": "中堅"}, {"id": "M07", "name": "山本 隆", "team": "D", "role": "中堅"}, {"id": "M08", "name": "中村 陽介", "team": "A", "role": "一般"}, {"id": "M09", "name": "小林 拓也", "team": "C", "role": "一般"}, {"id": "M10", "name": "加藤 大輔", "team": "D", "role": "サブリーダー"}, {"id": "M11", "name": "吉田 匠", "team": "E", "role": "サブリーダー"}, {"id": "M12", "name": "山田 悠斗", "team": "B", "role": "新人"}, {"id": "M13", "name": "佐々木 蓮", "team": "D", "role": "新人"}, {"id": "M14", "name": "松本 洋平", "team": "E", "role": "中堅"}, {"id": "M15", "name": "井上 直樹", "team": "E", "role": "一般"}], "team_shifts_by_date": [{"date": "2026-08-01", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-02", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-03", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-04", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-05", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-06", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-07", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-08", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-09", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-10", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-11", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-12", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-13", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-14", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-15", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-16", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-17", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-18", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-19", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-20", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-21", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-22", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-23", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-24", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-25", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-26", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-27", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-28", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-29", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-30", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-31", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}], "health": {"教育達成率": 41.2, "属人化耐性": 100.0, "資格充足率": 50.0, "バックアップ率": 66.7, "変更耐性": 100.0}, "health_overall": 71.6, "requested_days_off": {"M04": ["2026-08-10", "2026-08-11"], "M12": ["2026-08-20"], "M09": ["2026-08-15", "2026-08-16", "2026-08-17"]}, "night_overages": [{"member": "小林 拓也", "role": "一般", "scheduled_nights": 7, "limit": 6}, {"member": "山田 悠斗", "role": "新人", "scheduled_nights": 6, "limit": 4}, {"member": "佐々木 蓮", "role": "新人", "scheduled_nights": 6, "limit": 4}]};
+
+const FUTURE_DATA = {"projection": [{"month": 0, "overall": 71.6, "education": 41.2}, {"month": 3, "overall": 72.2, "education": 52.9}, {"month": 6, "overall": 73.0, "education": 56.7}, {"month": 12, "overall": 73.0, "education": 56.7}], "gap_count": 13, "people_needed": 5, "people_breakdown": [{"name": "佐藤 一郎", "covers": ["A/消防設備"]}, {"name": "鈴木 次郎", "covers": ["B/空調設備", "B/監視盤"]}, {"name": "高橋 三郎", "covers": ["C/受変電設備", "C/消防設備"]}, {"name": "加藤 大輔", "covers": ["D/受変電設備", "D/空調設備", "D/消防設備", "D/監視盤"]}, {"name": "吉田 匠", "covers": ["E/受変電設備", "E/空調設備", "E/消防設備", "E/監視盤"]}], "gaps_with_options": [{"team": "A", "equipment": "消防設備", "internal": "佐藤 一郎(現在 単独)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームAの早番Aへ応援に回す", "rotation": "佐藤 一郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}, {"team": "B", "equipment": "空調設備", "internal": "鈴木 次郎(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームBの早番Aへ応援に回す", "rotation": "鈴木 次郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}, {"team": "B", "equipment": "監視盤", "internal": "鈴木 次郎(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームBの早番Aへ応援に回す", "rotation": "鈴木 次郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}, {"team": "C", "equipment": "受変電設備", "internal": "高橋 三郎(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、鈴木 次郎(チームB) を臨時にチームCの早番Aへ応援に回す", "rotation": "高橋 三郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}, {"team": "C", "equipment": "消防設備", "internal": "高橋 三郎(現在 単独)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームCの早番Aへ応援に回す", "rotation": "高橋 三郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}, {"team": "D", "equipment": "受変電設備", "internal": "加藤 大輔(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、鈴木 次郎(チームB) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}, {"team": "D", "equipment": "空調設備", "internal": "加藤 大輔(現在 教育担当補助)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}, {"team": "D", "equipment": "消防設備", "internal": "加藤 大輔(現在 単独)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}, {"team": "D", "equipment": "監視盤", "internal": "加藤 大輔(現在 教育担当補助)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}, {"team": "E", "equipment": "受変電設備", "internal": "吉田 匠(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、鈴木 次郎(チームB) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}, {"team": "E", "equipment": "空調設備", "internal": "吉田 匠(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}, {"team": "E", "equipment": "消防設備", "internal": "吉田 匠(現在 教育担当補助)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}, {"team": "E", "equipment": "監視盤", "internal": "吉田 匠(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする"}]};
 
 const STORAGE_KEY = "a2e_leave_requests_v1";
 
@@ -165,6 +171,7 @@ export default function ShiftDashboard() {
   const [formDate, setFormDate] = useState("2026-08-10");
   const [formReason, setFormReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [expandedGap, setExpandedGap] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -434,6 +441,78 @@ export default function ShiftDashboard() {
                   </span>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-200">
+              <TrendingUp size={16} className="text-emerald-400" /> 未来シミュレーション(現ペース)
+            </div>
+            <div className="flex justify-between gap-2 mb-3">
+              {FUTURE_DATA.projection.map((p) => (
+                <div key={p.month} className="flex-1 bg-slate-950/60 border border-slate-800 rounded-lg p-2 text-center">
+                  <div className="text-[10px] text-slate-500">{p.month === 0 ? "現在" : `${p.month}ヶ月後`}</div>
+                  <div className="font-mono text-lg text-slate-100">{p.overall}</div>
+                  <div className="text-[10px] text-slate-600">教育{p.education}</div>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-slate-500">
+              6ヶ月以降スコアが頭打ちになっています。教育担当が同乗している早番Aでしか教育は進まないため、
+              教育担当が不在のチーム・設備では実績が積み上がりません。
+            </p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1 text-sm font-semibold text-slate-200">
+              <Wrench size={16} className="text-amber-400" /> 頭打ち箇所と対応案
+            </div>
+            <p className="text-xs text-slate-500 mb-3">
+              教育担当が不在の組み合わせ: <span className="font-mono text-slate-300">{FUTURE_DATA.gap_count}件</span>
+              (チーム×設備)。ただし1人が同じチーム内の複数設備を兼任できるため、実際に昇格が必要な人数は
+              <span className="font-mono text-emerald-300"> {FUTURE_DATA.people_needed}人</span>。
+            </p>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {FUTURE_DATA.people_breakdown.map((p) => (
+                <span key={p.name} className="text-[11px] px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                  {p.name}({p.covers.length}件)
+                </span>
+              ))}
+            </div>
+            <div className="space-y-1.5">
+              {FUTURE_DATA.gaps_with_options.map((g, i) => {
+                const key = `${g.team}-${g.equipment}`;
+                const isOpen = expandedGap === key;
+                return (
+                  <div key={key} className="border border-slate-800 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setExpandedGap(isOpen ? null : key)}
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-300 hover:bg-slate-800/50 transition"
+                    >
+                      <span>
+                        チーム{g.team} / {g.equipment}
+                      </span>
+                      {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+                    {isOpen && (
+                      <div className="px-3 pb-3 space-y-2 text-xs">
+                        <div className="bg-slate-950/50 rounded-lg p-2">
+                          <div className="text-emerald-300 font-medium mb-0.5">案1: 内部昇格</div>
+                          <div className="text-slate-400">{g.internal}</div>
+                        </div>
+                        <div className="bg-slate-950/50 rounded-lg p-2">
+                          <div className="text-cyan-300 font-medium mb-0.5">案2: 他チームからの応援</div>
+                          <div className="text-slate-400">{g.support}</div>
+                        </div>
+                        <div className="bg-slate-950/50 rounded-lg p-2">
+                          <div className="text-violet-300 font-medium mb-0.5">案3: 常駐化+ローテーション制</div>
+                          <div className="text-slate-400">{g.rotation}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
