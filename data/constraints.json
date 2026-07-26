@@ -30,7 +30,18 @@
 
   "working_hour_limits": {
     "max_hours_per_week": 40,
-    "min_rest_hours_between_shifts": 11
+    "min_rest_hours_between_shifts": 11,
+    "hours_by_shift": {
+      "早番A": 8, "早番B": 8, "夜勤": 16, "明け": 0, "休み": 0,
+      "早A": 8, "早B": 8, "夜": 16, "明": 0, "休": 0
+    }
+  },
+
+  "auto_approval": {
+    "enabled": true,
+    "min_days_before": 14,
+    "min_backup_headcount": 2,
+    "note": "管理者がこの機能自体をON/OFFできる想定。enabledをfalseにすると全件手動承認に戻る。"
   },
 
   "ng_pairs": [
@@ -59,6 +70,12 @@
     "M04": ["2026-08-10", "2026-08-11"],
     "M12": ["2026-08-20"],
     "M09": ["2026-08-15", "2026-08-16", "2026-08-17"]
+  },
+
+  "requested_days_off_submitted_on": {
+    "M04": "2026-07-01",
+    "M12": "2026-07-20",
+    "M09": "2026-08-05"
   },
 
   "long_leave": {

@@ -35,6 +35,8 @@ from openpyxl.comments import Comment
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from members import load_members as _load_members_objs  # noqa: E402
 from education import load_roadmap  # noqa: E402
+from shift_schedule import generate_schedule, DEMO_START_DATE, DEMO_NUM_DAYS  # noqa: E402
+from auto_approval import evaluate_all_requests, find_weekly_hour_violations  # noqa: E402
 from future_simulation import (  # noqa: E402
     instructor_gap_report,
     distinct_promotion_need,
@@ -83,6 +85,12 @@ def shift_for_team(day_index: int, team: str) -> str:
 def build_workbook():
     members = load_json("members.json")
     constraints = load_json("constraints.json")
+    member_objs = _load_members_objs()
+    roadmap = load_roadmap()
+    schedule_for_auto_approval = generate_schedule(member_objs, DEMO_START_DATE, DEMO_NUM_DAYS)
+    auto_approval_results = {
+        (r["member_id"], r["date"]): r for r in evaluate_all_requests(member_objs, schedule_for_auto_approval, constraints)
+    }
 
     wb = Workbook()
     wb.remove(wb.active)
@@ -91,6 +99,7 @@ def build_workbook():
     ws_health = wb.create_sheet("シフト健全度")
     ws_shift = wb.create_sheet("シフト表(2026年8月)")
     ws_requests = wb.create_sheet("希望休申請一覧")
+    ws_hours = wb.create_sheet("労働時間・自動承認設定")
     ws_gaps = wb.create_sheet("頭打ち箇所と対応案")
     ws_members = wb.create_sheet("メンバーデータ")
     ws_stagemap = wb.create_sheet("段階マップ")
@@ -222,7 +231,7 @@ def build_workbook():
     ws_requests["B1"].number_format = "0.0"
     ws_requests["C1"] = "=シフト健全度!C4"
 
-    req_headers = ["氏名", "チーム", "希望日", "理由", "割当中のシフト", "承認後のチーム残(単独対応可能)人数", "判定"]
+    req_headers = ["氏名", "チーム", "希望日", "理由", "割当中のシフト", "承認後のチーム残(単独対応可能)人数", "判定", "申請日", "自動承認可否", "自動承認/手動確認の理由"]
     header_row = 3
     for c, h in enumerate(req_headers, start=1):
         cell = ws_requests.cell(row=header_row, column=c, value=h)
@@ -232,6 +241,9 @@ def build_workbook():
     ws_requests.column_dimensions["D"].width = 16
     ws_requests.column_dimensions["F"].width = 30
     ws_requests.column_dimensions["G"].width = 26
+    ws_requests.column_dimensions["H"].width = 14
+    ws_requests.column_dimensions["I"].width = 14
+    ws_requests.column_dimensions["J"].width = 55
 
     shift_first_col_letter = get_column_letter(date_col_start)
     shift_last_col_letter = get_column_letter(date_col_start + NUM_DAYS - 1)
@@ -262,11 +274,26 @@ def build_workbook():
                 row=row, column=7,
                 value=f'=IF(F{row}>=2,"バックアップ不要",IF(F{row}=1,"要注意(イベント時はバックアップ検討)","バックアップ出動が必要"))'
             )
+            auto_result = auto_approval_results.get((mid, d_str))
+            if auto_result:
+                submitted_cell = ws_requests.cell(row=row, column=8, value=date.fromisoformat(auto_result["submitted_on"]))
+                submitted_cell.number_format = "yyyy/mm/dd"
+                verdict_cell = ws_requests.cell(
+                    row=row, column=9, value="自動承認" if auto_result["auto_approved"] else "手動確認"
+                )
+                verdict_cell.font = Font(
+                    name=FONT_NAME, bold=True,
+                    color="2E7D46" if auto_result["auto_approved"] else "B04A2E",
+                )
+                reason_cell = ws_requests.cell(row=row, column=10, value=" / ".join(auto_result["reasons"]))
+                reason_cell.alignment = Alignment(wrap_text=True, vertical="top")
             row += 1
 
     note_row = row + 1
     ws_requests.cell(row=note_row, column=1,
                       value="※「承認後のチーム残人数」は、そのチームで設備を単独対応以上でこなせる人数から、申請者本人の分を除いた人数です。").font = Font(name=FONT_NAME, italic=True, size=9)
+    ws_requests.cell(row=note_row + 1, column=1,
+                      value="※「自動承認可否」はsrc/auto_approval.pyで計算した値です(申請期限・週40時間・残人数・NGペアをすべて満たす場合のみ自動承認)。設定は「労働時間・自動承認設定」シート参照。").font = Font(name=FONT_NAME, italic=True, size=9)
 
     # ---------------- シフト健全度 ----------------
     ws_health.column_dimensions["A"].width = 26
@@ -479,9 +506,114 @@ def build_workbook():
     note_cell.font = Font(name=FONT_NAME, italic=True, size=10)
     ws_health.row_dimensions[note_row2].height = 60
 
+    # ---------------- 労働時間・自動承認設定 ----------------
+    ws_hours.column_dimensions["A"].width = 22
+    ws_hours.column_dimensions["B"].width = 16
+    ws_hours.column_dimensions["C"].width = 12
+    ws_hours.column_dimensions["D"].width = 45
+
+    ws_hours["A1"] = "労働時間チェック・自動承認設定"
+    ws_hours["A1"].font = TITLE_FONT
+    ws_hours.merge_cells("A1:D1")
+    note = ws_hours.cell(
+        row=2, column=1,
+        value=(
+            "週40時間を超える勤務は、シフト健全度の良し悪しとは無関係にチェックする"
+            "(健全度が高くても法令上の問題は残るため)。"
+        ),
+    )
+    note.font = Font(name=FONT_NAME, italic=True, size=9)
+    ws_hours.merge_cells("A2:D2")
+
+    ws_hours["A4"] = "自動承認設定(管理者がON/OFFできる)"
+    ws_hours["A4"].font = BOLD
+    settings = constraints.get("auto_approval", {})
+    setting_rows = [
+        ("自動承認機能", "有効" if settings.get("enabled") else "無効"),
+        ("申請期限(◯日前まで)", f"{settings.get('min_days_before')}日前まで"),
+        ("最低必要バックアップ人数", f"{settings.get('min_backup_headcount')}人"),
+    ]
+    for i, (label, value) in enumerate(setting_rows):
+        ws_hours.cell(row=5 + i, column=1, value=label)
+        ws_hours.cell(row=5 + i, column=2, value=value).font = BOLD
+
+    ws_hours["A9"] = "自動承認の条件(すべて満たした場合のみ、管理者の承認なしで通る)"
+    ws_hours["A9"].font = BOLD
+    conditions = [
+        "1. 自動承認機能が有効になっている(上記設定)",
+        "2. 申請日から希望日まで、設定した日数以上ある(直前の申請は対象外)",
+        "3. その週にチーム内で週40時間超えが無い(法令順守を優先し、健全度に関係なくブロック)",
+        "4. 承認後もチームに単独対応できる人が十分残る(健全度への影響が小さい)",
+        "5. NGペアの相手が関わる、当事者間の調整が必要な状況ではない",
+    ]
+    for i, c in enumerate(conditions):
+        ws_hours.cell(row=10 + i, column=1, value=c)
+        ws_hours.merge_cells(start_row=10 + i, start_column=1, end_row=10 + i, end_column=4)
+
+    hour_header_row = 17
+    ws_hours.cell(row=hour_header_row - 1, column=1, value="週40時間の労働時間チェック結果(2026年8月・デモ)").font = BOLD
+    for c, h in enumerate(["氏名", "チーム", "週", "時間", "上限"], start=1):
+        cell = ws_hours.cell(row=hour_header_row, column=c, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+
+    violations = find_weekly_hour_violations(schedule_for_auto_approval, member_objs, constraints)
+    r = hour_header_row + 1
+    for v in violations:
+        ws_hours.cell(row=r, column=1, value=v["member"])
+        ws_hours.cell(row=r, column=2, value=v["team"])
+        ws_hours.cell(row=r, column=3, value=v["week"])
+        ws_hours.cell(row=r, column=4, value=v["hours"])
+        ws_hours.cell(row=r, column=5, value=v["limit"])
+        r += 1
+
+    note2 = ws_hours.cell(
+        row=r + 1, column=1,
+        value=(
+            "※ このデモは「早番A/早番B=8時間、夜勤=16時間」という単純な前提で計算している。"
+            "実際の24時間現場では、夜勤を含むシフトは「1ヶ月単位の変形労働時間制」等で運用され、"
+            "週単位ではなく月単位で平均をとるのが一般的。本チェックはあくまで週単位の簡易チェックであり、"
+            "実際の適法性判断には社会保険労務士等への確認を推奨する。"
+        ),
+    )
+    note2.font = Font(name=FONT_NAME, italic=True, size=9)
+    note2.alignment = Alignment(wrap_text=True, vertical="top")
+    ws_hours.merge_cells(start_row=r + 1, start_column=1, end_row=r + 3, end_column=4)
+    ws_hours.row_dimensions[r + 1].height = 50
+
+    legal_row = r + 5
+    ws_hours.cell(row=legal_row, column=1, value="参考: 関連する法令メモ(簡易チェックの前提として)").font = BOLD
+    for c, h in enumerate(["項目", "内容"], start=1):
+        cell = ws_hours.cell(row=legal_row + 1, column=c, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+    legal_items = [
+        ("36協定(原則)", "月45時間までの残業は毎月可能(年360時間以内)。"),
+        ("36協定(特別条項)", "月45時間を「超える」残業ができるのが年6回まで。"),
+        ("1日8時間超のシフト", "「変形労働時間制」を導入していれば、所定労働時間として8時間超の設定が可能。"),
+        (
+            "日付またぎの勤務",
+            "暦日に関わらず「1つの勤務」として計算される。休憩(8時間超で1時間以上)と"
+            "割増賃金を支払えば16時間拘束も可能。",
+        ),
+    ]
+    for i, (label, text) in enumerate(legal_items):
+        rr = legal_row + 2 + i
+        ws_hours.cell(row=rr, column=1, value=label).font = BOLD
+        cell = ws_hours.cell(row=rr, column=2, value=text)
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
+        ws_hours.merge_cells(start_row=rr, start_column=2, end_row=rr, end_column=4)
+        ws_hours.row_dimensions[rr].height = 32
+    legal_note_row = legal_row + 2 + len(legal_items) + 1
+    legal_note = ws_hours.cell(
+        row=legal_note_row, column=1,
+        value="※ 上記は一般的な制度の概要であり、事業場ごとの労使協定・就業規則の内容が優先される。個別の適用可否は社会保険労務士等に確認すること。",
+    )
+    legal_note.font = Font(name=FONT_NAME, italic=True, size=9)
+    legal_note.alignment = Alignment(wrap_text=True, vertical="top")
+    ws_hours.merge_cells(start_row=legal_note_row, start_column=1, end_row=legal_note_row + 1, end_column=4)
+
     # ---------------- 頭打ち箇所と対応案(STEP7と連動) ----------------
-    member_objs = _load_members_objs()
-    roadmap = load_roadmap()
     gap_report = instructor_gap_report(member_objs, roadmap)
     need = distinct_promotion_need(member_objs, gap_report["gaps"])
 
