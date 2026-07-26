@@ -282,6 +282,26 @@ export default function ShiftDashboard() {
         <div className="p-8 text-slate-500 text-sm">読み込み中...</div>
       ) : view === "member" ? (
         <main className="p-5 max-w-md mx-auto space-y-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center gap-4">
+            <div className="shrink-0">
+              <div className="font-mono text-3xl font-bold" style={{ color: healthColor(DATA.health_overall) }}>
+                {DATA.health_overall.toFixed(1)}
+              </div>
+              <div className="text-[10px] text-slate-500 tracking-widest uppercase text-center">健全度</div>
+            </div>
+            <div className="text-xs text-slate-400 leading-relaxed">
+              <span className="text-slate-200 font-medium">
+                {DATA.health_overall >= 80
+                  ? "現在は余裕があります。"
+                  : DATA.health_overall >= 60
+                  ? "現在はやや余裕がない状態です。"
+                  : "現在は厳しい状態です。"}
+              </span>
+              希望休は通常どおり申請できます。教育・資格取得が進むほど、
+              この数字が上がり、希望休はさらに通りやすくなります。
+            </div>
+          </div>
+
           <div>
             <label className="text-xs text-slate-500 tracking-wide">あなた(デモ用の選択)</label>
             <select

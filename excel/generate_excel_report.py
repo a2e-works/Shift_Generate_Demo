@@ -516,7 +516,7 @@ def build_workbook():
         ws_gaps.cell(row=r, column=3, value=len(b["covers"]))
 
     detail_start = summary_header_row + 1 + len(need["breakdown"]) + 2
-    ws_gaps.cell(row=detail_start, column=1, value="箇所ごとの対応案(3案)").font = BOLD
+    ws_gaps.cell(row=detail_start, column=1, value="箇所ごとの対応案(4案)").font = BOLD
     header_row2 = detail_start + 1
     for c, h in enumerate(["チーム/設備", "案1: 内部昇格", "案2: 他チームからの応援", "案3: 常駐化+ローテーション制", "案4: チーム編成の見直し(異動)"], start=1):
         cell = ws_gaps.cell(row=header_row2, column=c, value=h)
@@ -548,16 +548,17 @@ def build_workbook():
     ws_gaps.row_dimensions[note_row].height = 40
 
     # ---------------- 使い方(読み方6ステップ) ----------------
-    ws_guide.column_dimensions["A"].width = 4
-    ws_guide.column_dimensions["B"].width = 34
-    ws_guide.column_dimensions["C"].width = 55
+    ws_guide.column_dimensions["A"].width = 10
+    ws_guide.column_dimensions["B"].width = 22
+    ws_guide.column_dimensions["C"].width = 46
+    ws_guide.column_dimensions["D"].width = 40
 
     ws_guide["A1"] = "このレポートの読み方(6ステップ)"
     ws_guide["A1"].font = TITLE_FONT
-    ws_guide.merge_cells("A1:C1")
+    ws_guide.merge_cells("A1:D1")
     ws_guide["A2"] = "スコアを見る → 原因を特定する → 対応案を選ぶ → 実行して効果を追う、という流れで使います。"
     ws_guide["A2"].font = Font(name=FONT_NAME, italic=True, size=10)
-    ws_guide.merge_cells("A2:C2")
+    ws_guide.merge_cells("A2:D2")
 
     def step_header(row, num, title):
         cell = ws_guide.cell(row=row, column=1, value=f"STEP{num}")
@@ -569,7 +570,9 @@ def build_workbook():
         ws_guide.merge_cells(start_row=row, start_column=2, end_row=row, end_column=3)
 
     def detail_line(row, label, text):
-        ws_guide.cell(row=row, column=2, value=label).font = Font(name=FONT_NAME, italic=True, size=9)
+        label_cell = ws_guide.cell(row=row, column=2, value=label)
+        label_cell.font = Font(name=FONT_NAME, bold=True, size=9, color="5A6472")
+        label_cell.alignment = Alignment(vertical="top")
         cell = ws_guide.cell(row=row, column=3, value=text)
         cell.alignment = Alignment(wrap_text=True, vertical="top")
         return cell
@@ -591,23 +594,46 @@ def build_workbook():
     ws_guide.cell(row=r, column=2, value="あるあるパターン").font = Font(name=FONT_NAME, bold=True, size=10)
     r += 1
     header_row = r
-    for c, h in enumerate(["指標", "低いとき、現場ではこう見えている"], start=2):
+    for c, h in enumerate(["指標", "低いとき、現場ではこう見えている", "数値の目安"], start=2):
         cell = ws_guide.cell(row=header_row, column=c, value=h)
         cell.font = HEADER_FONT
         cell.fill = HEADER_FILL
     r += 1
     aruaru = [
-        ("教育達成率が低い", "「新人にはまだ早い」でリーダーが仕事を抱え込み、教育の時間が取れていない"),
-        ("属人化耐性が低い", "「あの人じゃないと分からない」設備がある。その人が休むと現場が止まる"),
-        ("資格充足率が低い", "実務はこなせているが、必要な資格を持たないまま対応している人がいる(安全・法令上のリスク)"),
-        ("バックアップ率が低い", "誰か1人が抜けると、代わりを探すのに毎回一苦労する"),
-        ("変更耐性が低い", "急な欠勤・退職が出ると、その日のシフトが即座に組めなくなる"),
+        (
+            "教育達成率が低い",
+            "「新人にはまだ早い」でリーダーが仕事を抱え込み、教育の時間が取れていない",
+            "70%以上: 順調 / 40〜70%: 要改善(教育投資を増やす) / 40%未満: 緊急(頭打ちの可能性大)",
+        ),
+        (
+            "属人化耐性が低い",
+            "「あの人じゃないと分からない」設備がある。その人が休むと現場が止まる",
+            "80以上: 安全(3人以上対応可) / 40〜80: 要注意(1〜2人のみ) / 40未満: 危険(対応者ほぼ不在)",
+        ),
+        (
+            "資格充足率が低い",
+            "実務はこなせているが、必要な資格を持たないまま対応している人がいる(安全・法令上のリスク)",
+            "80%以上: 良好 / 50〜80%: 要改善 / 50%未満: リスク大(無資格対応が多い)",
+        ),
+        (
+            "バックアップ率が低い",
+            "誰か1人が抜けると、代わりを探すのに毎回一苦労する",
+            "70%以上: 良好 / 40〜70%: 要改善 / 40%未満: リスク大(誰も代われない)",
+        ),
+        (
+            "変更耐性が低い",
+            "急な欠勤・退職が出ると、その日のシフトが即座に組めなくなる",
+            "80以上: 安全 / 40〜80: 要注意 / 40未満: 危険(1人抜けたら即機能不全)",
+        ),
     ]
-    for label, text in aruaru:
+    for label, text, threshold in aruaru:
         ws_guide.cell(row=r, column=2, value=label).font = Font(name=FONT_NAME, bold=True, size=10)
         cell = ws_guide.cell(row=r, column=3, value=text)
         cell.alignment = Alignment(wrap_text=True, vertical="top")
-        ws_guide.row_dimensions[r].height = 30
+        th_cell = ws_guide.cell(row=r, column=4, value=threshold)
+        th_cell.alignment = Alignment(wrap_text=True, vertical="top")
+        th_cell.font = Font(name=FONT_NAME, size=9)
+        ws_guide.row_dimensions[r].height = 42
         r += 1
     detail_line(r, "このデモでは", "教育達成率41.3・資格充足率50.0が低い → 上記の1番目・3番目のパターンに近い")
     r += 2
@@ -633,6 +659,13 @@ def build_workbook():
     detail_line(r, "見る場所", "「希望休申請一覧」シートの判定列(G列)")
     r += 1
     detail_line(r, "判断の目安", "「バックアップ不要」ならそのまま承認。「要注意」「バックアップ出動が必要」なら対応を検討してから判断する")
+    r += 1
+    note_cell2 = detail_line(
+        r, "どうしても休む場合",
+        "このシステムは代替要員を自動で割り当てません。管理者がSTEP4の対応案(特に『他チームからの応援』)"
+        "から即効性のある案を選び、シフト表に手動で反映してください",
+    )
+    note_cell2.font = Font(name=FONT_NAME, size=9, color="B04A2E")
     r += 2
 
     step_header(r, 6, "実行して効果を追跡する")
@@ -640,6 +673,26 @@ def build_workbook():
     detail_line(r, "実行", "選んだ対応策を来月のシフトに反映する")
     r += 1
     detail_line(r, "効果の確認", "python src/future_simulation.py を実行すると、3・6・12ヶ月後の健全度予測が再計算できる")
+    r += 2
+
+    step_header(r, "0", "【メンバー向け】スマホで健全度を見てから希望休を申請する")
+    r += 1
+    detail_line(r, "使うもの", "dashboard/ShiftDashboard.jsx(スマホのブラウザ/claude.aiのアーティファクトとして動作)")
+    r += 1
+    detail_line(r, "手順1", "ダッシュボードを開き、メンバービューで自分の名前を選ぶ")
+    r += 1
+    detail_line(r, "手順2", "画面上部に表示される『現在の健全度』を見る(このデモではメンバー全員が同じ数値を見る組織全体の健全度)")
+    r += 1
+    detail_line(r, "手順3", "自分のシフトを確認し、休みたい日付・理由を入力して申請する")
+    r += 1
+    detail_line(r, "手順4", "申請は管理者ビューに即時反映され、承認/却下の結果もこの画面に表示される")
+    r += 1
+    note_cell3 = detail_line(
+        r, "現状の制約",
+        "『この日にこの人が休んだら健全度が何点になるか』という個人単位のシミュレーションは、"
+        "現バージョンでは管理者ビュー側(STEP4・5)でのみ確認できる。メンバー個人向けのシミュレーションはV2で検討",
+    )
+    note_cell3.font = Font(name=FONT_NAME, size=9, color="B04A2E")
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     wb.save(OUT_PATH)
