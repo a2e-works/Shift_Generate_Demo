@@ -87,6 +87,7 @@ def build_workbook():
     wb = Workbook()
     wb.remove(wb.active)
 
+    ws_guide = wb.create_sheet("使い方")
     ws_health = wb.create_sheet("シフト健全度")
     ws_shift = wb.create_sheet("シフト表(2026年8月)")
     ws_requests = wb.create_sheet("希望休申請一覧")
@@ -545,6 +546,100 @@ def build_workbook():
     note_cell.font = Font(name=FONT_NAME, italic=True, size=9)
     note_cell.alignment = Alignment(wrap_text=True, vertical="top")
     ws_gaps.row_dimensions[note_row].height = 40
+
+    # ---------------- 使い方(読み方6ステップ) ----------------
+    ws_guide.column_dimensions["A"].width = 4
+    ws_guide.column_dimensions["B"].width = 34
+    ws_guide.column_dimensions["C"].width = 55
+
+    ws_guide["A1"] = "このレポートの読み方(6ステップ)"
+    ws_guide["A1"].font = TITLE_FONT
+    ws_guide.merge_cells("A1:C1")
+    ws_guide["A2"] = "スコアを見る → 原因を特定する → 対応案を選ぶ → 実行して効果を追う、という流れで使います。"
+    ws_guide["A2"].font = Font(name=FONT_NAME, italic=True, size=10)
+    ws_guide.merge_cells("A2:C2")
+
+    def step_header(row, num, title):
+        cell = ws_guide.cell(row=row, column=1, value=f"STEP{num}")
+        cell.font = Font(name=FONT_NAME, bold=True, color="FFFFFF")
+        cell.fill = HEADER_FILL
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        title_cell = ws_guide.cell(row=row, column=2, value=title)
+        title_cell.font = Font(name=FONT_NAME, bold=True, size=12)
+        ws_guide.merge_cells(start_row=row, start_column=2, end_row=row, end_column=3)
+
+    def detail_line(row, label, text):
+        ws_guide.cell(row=row, column=2, value=label).font = Font(name=FONT_NAME, italic=True, size=9)
+        cell = ws_guide.cell(row=row, column=3, value=text)
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
+        return cell
+
+    r = 4
+    step_header(r, 1, "総合スコアを見る")
+    r += 1
+    detail_line(r, "見る場所", "「シフト健全度」シート C3セル(総合健全度スコア)")
+    r += 1
+    detail_line(r, "判断基準", "80以上=安全 / 60〜79=要注意 / 60未満=要対応(バックアップ確保が必要)")
+    r += 1
+    detail_line(r, "このデモでは", "71.6 → 要注意(イベント重複時は厳しい可能性)")
+    r += 2
+
+    step_header(r, 2, "弱い指標を特定する")
+    r += 1
+    detail_line(r, "見る場所", "「シフト健全度」シートの指標テーブル(教育達成率・属人化耐性・資格充足率・バックアップ率・変更耐性)")
+    r += 1
+    ws_guide.cell(row=r, column=2, value="あるあるパターン").font = Font(name=FONT_NAME, bold=True, size=10)
+    r += 1
+    header_row = r
+    for c, h in enumerate(["指標", "低いとき、現場ではこう見えている"], start=2):
+        cell = ws_guide.cell(row=header_row, column=c, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+    r += 1
+    aruaru = [
+        ("教育達成率が低い", "「新人にはまだ早い」でリーダーが仕事を抱え込み、教育の時間が取れていない"),
+        ("属人化耐性が低い", "「あの人じゃないと分からない」設備がある。その人が休むと現場が止まる"),
+        ("資格充足率が低い", "実務はこなせているが、必要な資格を持たないまま対応している人がいる(安全・法令上のリスク)"),
+        ("バックアップ率が低い", "誰か1人が抜けると、代わりを探すのに毎回一苦労する"),
+        ("変更耐性が低い", "急な欠勤・退職が出ると、その日のシフトが即座に組めなくなる"),
+    ]
+    for label, text in aruaru:
+        ws_guide.cell(row=r, column=2, value=label).font = Font(name=FONT_NAME, bold=True, size=10)
+        cell = ws_guide.cell(row=r, column=3, value=text)
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
+        ws_guide.row_dimensions[r].height = 30
+        r += 1
+    detail_line(r, "このデモでは", "教育達成率41.3・資格充足率50.0が低い → 上記の1番目・3番目のパターンに近い")
+    r += 2
+
+    step_header(r, 3, "原因の場所を特定する")
+    r += 1
+    detail_line(r, "教育達成率が低い場合", "「頭打ち箇所と対応案」シートで、どのチーム・設備に教育担当が不在かを確認する")
+    r += 1
+    detail_line(r, "資格充足率が低い場合", "「シフト健全度」シートの資格充足率内訳で、どの設備の資格保有者が少ないかを確認する")
+    r += 1
+    detail_line(r, "このデモでは", "チームD・Eに教育担当が1人もいない。電気工事士・冷凍機械責任者の保有者が少ない")
+    r += 2
+
+    step_header(r, 4, "対応案を選ぶ")
+    r += 1
+    detail_line(r, "見る場所", "「頭打ち箇所と対応案」シートの4案(内部昇格/他チーム応援/常駐化+ローテーション制/チーム編成の見直し)")
+    r += 1
+    detail_line(r, "選び方の目安", "即効性重視なら他チームからの応援、恒久的な解決を目指すなら内部昇格やチーム編成の見直し")
+    r += 2
+
+    step_header(r, 5, "個別の希望休を判断する")
+    r += 1
+    detail_line(r, "見る場所", "「希望休申請一覧」シートの判定列(G列)")
+    r += 1
+    detail_line(r, "判断の目安", "「バックアップ不要」ならそのまま承認。「要注意」「バックアップ出動が必要」なら対応を検討してから判断する")
+    r += 2
+
+    step_header(r, 6, "実行して効果を追跡する")
+    r += 1
+    detail_line(r, "実行", "選んだ対応策を来月のシフトに反映する")
+    r += 1
+    detail_line(r, "効果の確認", "python src/future_simulation.py を実行すると、3・6・12ヶ月後の健全度予測が再計算できる")
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     wb.save(OUT_PATH)
