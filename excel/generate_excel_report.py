@@ -682,8 +682,19 @@ def build_workbook():
     # ---------------- 使い方(読み方6ステップ) ----------------
     ws_guide.column_dimensions["A"].width = 10
     ws_guide.column_dimensions["B"].width = 22
-    ws_guide.column_dimensions["C"].width = 46
-    ws_guide.column_dimensions["D"].width = 40
+    ws_guide.column_dimensions["C"].width = 48
+    ws_guide.column_dimensions["D"].width = 44
+
+    def _est_lines(text, col_width):
+        """列幅とテキスト量から、折り返し後の行数を概算する(日本語は1文字≒2ユニット幅として計算)。"""
+        if not text:
+            return 1
+        capacity = max(4, col_width / 2.0)
+        return max(1, -(-len(text) // int(capacity)))
+
+    def _fit_row_height(row, texts_and_widths, base=16, pad=8):
+        max_lines = max(_est_lines(t, w) for t, w in texts_and_widths) if texts_and_widths else 1
+        ws_guide.row_dimensions[row].height = base * max_lines + pad
 
     ws_guide["A1"] = "このレポートの読み方(6ステップ)"
     ws_guide["A1"].font = TITLE_FONT
@@ -699,14 +710,17 @@ def build_workbook():
         cell.alignment = Alignment(horizontal="center", vertical="center")
         title_cell = ws_guide.cell(row=row, column=2, value=title)
         title_cell.font = Font(name=FONT_NAME, bold=True, size=12)
+        title_cell.alignment = Alignment(vertical="center", wrap_text=True)
         ws_guide.merge_cells(start_row=row, start_column=2, end_row=row, end_column=3)
+        _fit_row_height(row, [(title, 24 + 46)], base=18, pad=10)
 
     def detail_line(row, label, text):
         label_cell = ws_guide.cell(row=row, column=2, value=label)
         label_cell.font = Font(name=FONT_NAME, bold=True, size=9, color="5A6472")
-        label_cell.alignment = Alignment(vertical="top")
+        label_cell.alignment = Alignment(vertical="top", wrap_text=True)
         cell = ws_guide.cell(row=row, column=3, value=text)
         cell.alignment = Alignment(wrap_text=True, vertical="top")
+        _fit_row_height(row, [(label, 22), (text, 48)])
         return cell
 
     r = 4
@@ -730,6 +744,8 @@ def build_workbook():
         cell = ws_guide.cell(row=header_row, column=c, value=h)
         cell.font = HEADER_FONT
         cell.fill = HEADER_FILL
+        cell.alignment = Alignment(wrap_text=True, vertical="center")
+    ws_guide.row_dimensions[header_row].height = 30
     r += 1
     aruaru = [
         (
@@ -759,13 +775,15 @@ def build_workbook():
         ),
     ]
     for label, text, threshold in aruaru:
-        ws_guide.cell(row=r, column=2, value=label).font = Font(name=FONT_NAME, bold=True, size=10)
+        label_cell = ws_guide.cell(row=r, column=2, value=label)
+        label_cell.font = Font(name=FONT_NAME, bold=True, size=10)
+        label_cell.alignment = Alignment(wrap_text=True, vertical="top")
         cell = ws_guide.cell(row=r, column=3, value=text)
         cell.alignment = Alignment(wrap_text=True, vertical="top")
         th_cell = ws_guide.cell(row=r, column=4, value=threshold)
         th_cell.alignment = Alignment(wrap_text=True, vertical="top")
         th_cell.font = Font(name=FONT_NAME, size=9)
-        ws_guide.row_dimensions[r].height = 42
+        _fit_row_height(r, [(label, 22), (text, 48), (threshold, 44)], base=15, pad=10)
         r += 1
     detail_line(r, "このデモでは", "教育達成率41.3・資格充足率50.0が低い → 上記の1番目・3番目のパターンに近い")
     r += 2
