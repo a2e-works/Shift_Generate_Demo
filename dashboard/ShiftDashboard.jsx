@@ -494,6 +494,39 @@ export default function ShiftDashboard() {
             </div>
           </div>
 
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-semibold text-slate-200">希望休の自動承認機能</div>
+              <div className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                有効にすると、申請期限({AUTO_APPROVAL.settings.min_days_before}日前まで)・週40時間・
+                チームの残人数・NGペアの条件をすべて満たす希望休は、承認なしで自動的に通ります。
+              </div>
+            </div>
+            <button
+              onClick={() => setAutoApprovalEnabled((v) => !v)}
+              className={`shrink-0 w-14 h-8 rounded-full border transition relative ${
+                autoApprovalEnabled ? "bg-emerald-500/30 border-emerald-500/60" : "bg-slate-800 border-slate-700"
+              }`}
+            >
+              <span
+                className={`absolute top-1 w-6 h-6 rounded-full transition-transform ${
+                  autoApprovalEnabled ? "translate-x-7 bg-emerald-400" : "translate-x-1 bg-slate-500"
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-200">
+              <Moon size={16} className="text-indigo-400" /> 週40時間の労働時間チェック(健全度と無関係の法令チェック)
+            </div>
+            <div className="text-xs text-slate-500 leading-relaxed">
+              自動承認は、この週40時間チェックに違反しているチームがあれば、健全度が高くても実行されません。
+              現在のデモデータでは、夜勤を含むローテーションの前提上、複数チームで違反が発生しています
+              (実際の現場では「1ヶ月単位の変形労働時間制」等で運用されることが多く、単純な週単位チェックとは異なる場合があります)。
+            </div>
+          </div>
+
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-200">
               <AlertTriangle size={16} className="text-amber-400" /> 対応が必要な希望休(
