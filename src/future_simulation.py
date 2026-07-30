@@ -36,6 +36,7 @@ from health_score import (
     calc_qualification_fulfillment_rate,
     calc_backup_coverage_rate,
     calc_change_resilience_score,
+    INDEPENDENT_STAGE_INDEX,
 )
 
 EARLY_A_DAYS_PER_MONTH = 6  # 31日 ÷ 5パターン ≒ 6.2回 の近似(前提として明示)
@@ -335,8 +336,53 @@ def gap_resolution_options(members: List[Member], gap: dict) -> dict:
     }
 
 
-def succession_risk(members: List[Member], role: str, team: str, months_until_departure: int) -> dict:
-    """『このチームのこの役職が、あと何ヶ月後かに抜ける』という想定でのリスク判定。"""
+def calc_operating_capacity_index(members: List[Member], constraints: dict, min_team_size: int = 3) -> dict:
+    """運営余力指数(3層構造の1層目: そもそも物理的に回せる体制か)。
+
+    教育の質や属人化の度合いといった『健全さ』は問わず、もっと手前の
+    シンプルな2点だけを見る:
+      1. 各チームの人数が最低限の人数(デモでは3人)を満たしているか
+      2. 各設備の必須資格について、資格保有かつ対応可能な人が組織内に
+         1人でも存在するか(『いるか/いないか』の存在チェック。比率は問わない)
+
+    現状の静的なスナップショットでは常に満点近くになりやすい指標であり、
+    本当に意味を持つのは「誰かが抜けたら」という変化を見るとき
+    (succession_risk関数でbefore/afterを比較する形で使う)。
+    """
+    teams: Dict[str, List[Member]] = {}
+    for m in members:
+        teams.setdefault(m.team, []).append(m)
+    team_scores = {t: round(min(len(ms), min_team_size) / min_team_size * 100, 1) for t, ms in teams.items()}
+
+    qual = constraints.get("qualification_requirements", {})
+    eq_scores = {}
+    for eq, rule in qual.items():
+        certs = set(rule.get("any_of_certifications", []))
+        exists = any(
+            m.equipment_skills.get(eq) is not None
+            and _stage_index(m.equipment_skills[eq]) >= INDEPENDENT_STAGE_INDEX
+            and (certs & set(m.certifications))
+            for m in members
+        )
+        eq_scores[eq] = 100.0 if exists else 0.0
+
+    all_scores = list(team_scores.values()) + list(eq_scores.values())
+    overall = round(sum(all_scores) / len(all_scores), 1) if all_scores else 0.0
+    return {"overall": overall, "team_headcount": team_scores, "qualification_existence": eq_scores}
+
+
+def succession_risk(
+    members: List[Member], role: str, team: str, months_until_departure: int, constraints: Optional[dict] = None
+) -> dict:
+    """『このチームのこの役職が、あと何ヶ月後かに抜ける』という想定でのリスク判定。
+
+    運営余力指数(抜ける前/抜けた後)・シフト健全度への影響・リードタイムを
+    まとめて判定する(3層構造: 運営余力→シフト健全度→将来健全度、のうち
+    最初の2層をこのシナリオ分析で見る)。
+    """
+    if constraints is None:
+        constraints = load_constraints()
+
     lead_time = ROLE_SUCCESSION_LEAD_MONTHS.get(role, 1)
     at_risk = months_until_departure < lead_time
 
@@ -349,6 +395,16 @@ def succession_risk(members: List[Member], role: str, team: str, months_until_de
             if m.future_candidate == candidate_tag
         ]
 
+    before = calc_operating_capacity_index(members, constraints)
+    matching = [m for m in members if m.team == team and m.role == role]
+    operating_capacity_after = None
+    departing_member_name = None
+    if matching:
+        departing_member_name = matching[0].name
+        remaining = [m for m in members if m.member_id != matching[0].member_id]
+        after = calc_operating_capacity_index(remaining, constraints)
+        operating_capacity_after = after["overall"]
+
     return {
         "role": role,
         "team": team,
@@ -357,6 +413,9 @@ def succession_risk(members: List[Member], role: str, team: str, months_until_de
         "at_risk": at_risk,
         "candidates_org_wide": candidates,
         "candidates_in_team": [c for c in candidates if c["team"] == team],
+        "departing_member_name": departing_member_name,
+        "operating_capacity_before": before["overall"],
+        "operating_capacity_after": operating_capacity_after,
     }
 
 
@@ -411,7 +470,12 @@ if __name__ == "__main__":
     print()
     print("=== 退職シミュレーション(役職別リードタイム: リーダー6ヶ月/サブリーダー3ヶ月/それ以外1ヶ月) ===")
     scenario = succession_risk(members, role="リーダー", team="C", months_until_departure=4)
-    print(f"  シナリオ: チームCのリーダーが4ヶ月後に退職予定")
+    print(f"  シナリオ: チームCのリーダー({scenario['departing_member_name']})が4ヶ月後に退職予定")
     print(f"    必要リードタイム: {scenario['required_lead_time_months']}ヶ月 → {'危険(準備期間不足)' if scenario['at_risk'] else '対応可能な見込み'}")
     print(f"    リーダー候補(全社): {[c['name']+'('+c['team']+')' for c in scenario['candidates_org_wide']]}")
     print(f"    チームC内の候補: {[c['name'] for c in scenario['candidates_in_team']] or 'なし(要注意)'}")
+    print(
+        f"    運営余力指数(そもそも物理的に回せるか): "
+        f"{scenario['operating_capacity_before']} → {scenario['operating_capacity_after']}"
+        f"{'(低下)' if scenario['operating_capacity_after'] is not None and scenario['operating_capacity_after'] < scenario['operating_capacity_before'] else ''}"
+    )
