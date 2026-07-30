@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A2E Works - シフト改善支援ダッシュボード(デモ)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+<!--
+  これは単体で動くHTMLファイルです。ダブルクリックしてブラウザで開くだけで動作します
+  (インターネット接続は、上のCDN読み込みのため初回のみ必要です)。
+  Claudeやその他の特別な環境は一切不要です。
+
+  データの保存には、ブラウザのlocalStorage(この端末・このブラウザ内だけに保存される
+  簡易的な保存領域)を使っています。他の人とはリアルタイムには共有されません。
+  「サーバーなしでも申請〜承認のやり取りが動く」という体験を試すためのデモです。
+-->
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+// ---- アイコン(lucide-reactの代わりに絵文字ベースの簡易コンポーネントを使用。外部依存ゼロにするため) ----
+function Icon({ children, size = 16, className = "" }) {
+  return <span style={{ fontSize: size, lineHeight: 1, display: "inline-block" }} className={className}>{children}</span>;
+}
+const CalendarDays = (p) => <Icon {...p}>📅</Icon>;
+const UserCircle2 = (p) => <Icon {...p}>👤</Icon>;
+const ShieldCheck = (p) => <Icon {...p}>🛡️</Icon>;
+const Moon = (p) => <Icon {...p}>🌙</Icon>;
+const AlertTriangle = (p) => <Icon {...p}>⚠️</Icon>;
+const TrendingUp = (p) => <Icon {...p}>📈</Icon>;
+const Wrench = (p) => <Icon {...p}>🔧</Icon>;
+const ChevronUp = (p) => <Icon {...p}>▲</Icon>;
+const ChevronDown = (p) => <Icon {...p}>▼</Icon>;
+const CheckCircle2 = (p) => <Icon {...p}>✅</Icon>;
+const XCircle = (p) => <Icon {...p}>❌</Icon>;
+const Clock3 = (p) => <Icon {...p}>🕐</Icon>;
+
+// ---- ブラウザのlocalStorageを使った簡易ストレージ(window.storageの代わり) ----
+const storage = {
+  async get(key, shared) {
+    const raw = localStorage.getItem("a2e_" + key);
+    if (raw === null) {
+      throw new Error("not found");
+    }
+    return { key, value: raw, shared };
+  },
+  async set(key, value, shared) {
+    localStorage.setItem("a2e_" + key, value);
+    return { key, value, shared };
+  },
+};
+
+
+/**
+ * STEP6: シフト改善支援ダッシュボード(プロトタイプ)
+ *
+ * 目的:
+ *   将来的に「メンバーがスマホでシフトを確認し、希望休を申請し、
+ *   管理者が承認すると即座に反映される」体験を、実際に動くものとして検証する。
+ *
+ * 位置づけ:
+ *   これは本番のスマホアプリではない。ブラウザのlocalStorage(この端末のみに保存)を使い、
+ *   申請〜承認のやり取りがサーバー構築なしで即時反映されることを実証するプロトタイプ。
+ *   実際の運用では、これに認証・Excel連携・通知などを加えて本番化する想定(V2以降)。
+ */
+
+// ---- STEP1〜5で生成したデータ(2026年8月分のデモ) ----
+const DATA = {"members": [{"id": "M01", "name": "佐藤 一郎", "team": "A", "role": "リーダー", "capable": true}, {"id": "M02", "name": "鈴木 次郎", "team": "B", "role": "リーダー", "capable": true}, {"id": "M03", "name": "高橋 三郎", "team": "C", "role": "リーダー", "capable": true}, {"id": "M04", "name": "田中 誠", "team": "A", "role": "中堅", "capable": true}, {"id": "M05", "name": "伊藤 健太", "team": "B", "role": "中堅", "capable": true}, {"id": "M06", "name": "渡辺 修", "team": "C", "role": "中堅", "capable": true}, {"id": "M07", "name": "山本 隆", "team": "D", "role": "中堅", "capable": true}, {"id": "M08", "name": "中村 陽介", "team": "A", "role": "一般", "capable": true}, {"id": "M09", "name": "小林 拓也", "team": "C", "role": "一般", "capable": false}, {"id": "M10", "name": "加藤 大輔", "team": "D", "role": "サブリーダー", "capable": true}, {"id": "M11", "name": "吉田 匠", "team": "E", "role": "サブリーダー", "capable": true}, {"id": "M12", "name": "山田 悠斗", "team": "B", "role": "新人", "capable": false}, {"id": "M13", "name": "佐々木 蓮", "team": "D", "role": "新人", "capable": false}, {"id": "M14", "name": "松本 洋平", "team": "E", "role": "中堅", "capable": true}, {"id": "M15", "name": "井上 直樹", "team": "E", "role": "一般", "capable": false}], "team_shifts_by_date": [{"date": "2026-08-01", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-02", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-03", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-04", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-05", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-06", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-07", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-08", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-09", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-10", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-11", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-12", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-13", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-14", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-15", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-16", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-17", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-18", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-19", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-20", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-21", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-22", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-23", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-24", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-25", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-26", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}, {"date": "2026-08-27", "shifts": {"A": "早番B", "B": "夜勤", "C": "明け", "D": "休み", "E": "早番A"}}, {"date": "2026-08-28", "shifts": {"A": "夜勤", "B": "明け", "C": "休み", "D": "早番A", "E": "早番B"}}, {"date": "2026-08-29", "shifts": {"A": "明け", "B": "休み", "C": "早番A", "D": "早番B", "E": "夜勤"}}, {"date": "2026-08-30", "shifts": {"A": "休み", "B": "早番A", "C": "早番B", "D": "夜勤", "E": "明け"}}, {"date": "2026-08-31", "shifts": {"A": "早番A", "B": "早番B", "C": "夜勤", "D": "明け", "E": "休み"}}], "health": {"教育達成率": 41.2, "属人化耐性": 100.0, "資格充足率": 50.0, "バックアップ率": 66.7, "変更耐性": 100.0}, "health_overall": 71.6, "requested_days_off": {"M04": ["2026-08-10", "2026-08-11"], "M12": ["2026-08-20"], "M09": ["2026-08-15", "2026-08-16", "2026-08-17"]}, "night_overages": [{"member": "小林 拓也", "role": "一般", "scheduled_nights": 7, "limit": 6}, {"member": "山田 悠斗", "role": "新人", "scheduled_nights": 6, "limit": 4}, {"member": "佐々木 蓮", "role": "新人", "scheduled_nights": 6, "limit": 4}]};
+
+const FUTURE_DATA = {"projection": [{"month": 0, "overall": 71.6, "education": 41.2}, {"month": 3, "overall": 72.2, "education": 52.9}, {"month": 6, "overall": 73.0, "education": 56.7}, {"month": 12, "overall": 73.0, "education": 56.7}], "gap_count": 13, "people_needed": 5, "people_breakdown": [{"name": "佐藤 一郎", "covers": ["A/消防設備"]}, {"name": "鈴木 次郎", "covers": ["B/空調設備", "B/監視盤"]}, {"name": "高橋 三郎", "covers": ["C/受変電設備", "C/消防設備"]}, {"name": "加藤 大輔", "covers": ["D/受変電設備", "D/空調設備", "D/消防設備", "D/監視盤"]}, {"name": "吉田 匠", "covers": ["E/受変電設備", "E/空調設備", "E/消防設備", "E/監視盤"]}], "gaps_with_options": [{"team": "A", "equipment": "消防設備", "internal": "佐藤 一郎(現在 単独)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームAの早番Aへ応援に回す", "rotation": "佐藤 一郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "鈴木 次郎(チームB)を チームA へ恒久的に異動する。異動元(チームB)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "B", "equipment": "空調設備", "internal": "鈴木 次郎(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームBの早番Aへ応援に回す", "rotation": "鈴木 次郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームB へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "B", "equipment": "監視盤", "internal": "鈴木 次郎(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームBの早番Aへ応援に回す", "rotation": "鈴木 次郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームB へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "C", "equipment": "受変電設備", "internal": "高橋 三郎(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、鈴木 次郎(チームB) を臨時にチームCの早番Aへ応援に回す", "rotation": "高橋 三郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームC へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "C", "equipment": "消防設備", "internal": "高橋 三郎(現在 単独)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームCの早番Aへ応援に回す", "rotation": "高橋 三郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "鈴木 次郎(チームB)を チームC へ恒久的に異動する。異動元(チームB)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "D", "equipment": "受変電設備", "internal": "加藤 大輔(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、鈴木 次郎(チームB) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームD へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "D", "equipment": "空調設備", "internal": "加藤 大輔(現在 教育担当補助)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームD へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "D", "equipment": "消防設備", "internal": "加藤 大輔(現在 単独)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "鈴木 次郎(チームB)を チームD へ恒久的に異動する。異動元(チームB)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "D", "equipment": "監視盤", "internal": "加藤 大輔(現在 教育担当補助)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームD へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "E", "equipment": "受変電設備", "internal": "吉田 匠(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、鈴木 次郎(チームB) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームE へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "E", "equipment": "空調設備", "internal": "吉田 匠(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームE へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "E", "equipment": "消防設備", "internal": "吉田 匠(現在 教育担当補助)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "鈴木 次郎(チームB)を チームE へ恒久的に異動する。異動元(チームB)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "E", "equipment": "監視盤", "internal": "吉田 匠(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームE へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}]};
+
+const AUTO_APPROVAL = {"settings": {"enabled": true, "min_days_before": 14, "min_backup_headcount": 2, "note": "管理者がこの機能自体をON/OFFできる想定。enabledをfalseにすると全件手動承認に戻る。"}, "results": [{"member_id": "M04", "date": "2026-08-10", "submitted_on": "2026-07-01", "auto_approved": true, "reasons": ["申請期限・週40時間・チームの残人数(2人)・NGペアのいずれも問題なし → 自動承認"]}, {"member_id": "M04", "date": "2026-08-11", "submitted_on": "2026-07-01", "auto_approved": true, "reasons": ["申請期限・週40時間・チームの残人数(2人)・NGペアのいずれも問題なし → 自動承認"]}, {"member_id": "M12", "date": "2026-08-20", "submitted_on": "2026-07-20", "auto_approved": false, "reasons": ["週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(鈴木 次郎、伊藤 健太、山田 悠斗)"]}, {"member_id": "M09", "date": "2026-08-15", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 10日前)", "週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(高橋 三郎、渡辺 修、小林 拓也)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}, {"member_id": "M09", "date": "2026-08-16", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 11日前)", "週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(高橋 三郎、渡辺 修、小林 拓也)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}, {"member_id": "M09", "date": "2026-08-17", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 12日前)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}]};
+
+const STORAGE_KEY = "a2e_leave_requests_v1";
+
+const SHIFT_META = {
+  "早番A": { sub: "教育投資枠", chip: "bg-violet-500/15 text-violet-300 border-violet-500/40", dot: "bg-violet-400" },
+  "早番B": { sub: "早番", chip: "bg-amber-500/15 text-amber-300 border-amber-500/40", dot: "bg-amber-400" },
+  "夜勤": { sub: "夜間対応", chip: "bg-indigo-500/15 text-indigo-300 border-indigo-500/40", dot: "bg-indigo-400" },
+  "明け": { sub: "夜勤明け", chip: "bg-zinc-500/15 text-zinc-300 border-zinc-500/40", dot: "bg-zinc-400" },
+  "休み": { sub: "休日", chip: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40", dot: "bg-emerald-400" },
+};
+
+const STATUS_META = {
+  pending: { label: "承認待ち", cls: "text-amber-300 bg-amber-500/10 border-amber-500/40", Icon: Clock3 },
+  approved: { label: "承認済み", cls: "text-emerald-300 bg-emerald-500/10 border-emerald-500/40", Icon: CheckCircle2 },
+  rejected: { label: "却下", cls: "text-red-300 bg-red-500/10 border-red-500/40", Icon: XCircle },
+};
+
+function shiftFor(memberId, dateStr) {
+  const member = DATA.members.find((m) => m.id === memberId);
+  const day = DATA.team_shifts_by_date.find((d) => d.date === dateStr);
+  if (!member || !day) return null;
+  return day.shifts[member.team];
+}
+
+// ---- 希望休の自動承認ロジック(src/auto_approval.py と同じ考え方をJS側でも再現) ----
+const HOURS_BY_SHIFT = { "早番A": 8, "早番B": 8, "夜勤": 16, "明け": 0, "休み": 0 };
+
+function getISOWeekKey(dateStr) {
+  const d = new Date(dateStr + "T00:00:00Z");
+  const dayNum = (d.getUTCDay() + 6) % 7; // 月曜=0
+  d.setUTCDate(d.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  const diff = (d - firstThursday) / 86400000;
+  const week = 1 + Math.round(diff / 7);
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+function weeklyHoursForTeam(team, weekKey) {
+  let total = 0;
+  for (const day of DATA.team_shifts_by_date) {
+    if (getISOWeekKey(day.date) === weekKey) {
+      total += HOURS_BY_SHIFT[day.shifts[team]] || 0;
+    }
+  }
+  return total;
+}
+
+function teamCapableHeadcount(team) {
+  return DATA.members.filter((m) => m.team === team && m.capable).length;
+}
+
+function checkNgPairPartner(memberId) {
+  for (const pair of AUTO_APPROVAL.ng_pairs) {
+    if (pair.includes(memberId)) {
+      const otherId = pair.find((id) => id !== memberId);
+      const other = DATA.members.find((m) => m.id === otherId);
+      if (other) return other.name;
+    }
+  }
+  return null;
+}
+
+function evaluateAutoApproval(memberId, requestDateStr, submittedDateStr, enabledOverride) {
+  const settings = AUTO_APPROVAL.settings;
+  const enabled = enabledOverride === undefined ? settings.enabled : enabledOverride;
+  if (!enabled) {
+    return { autoApproved: false, reasons: ["管理者設定により自動承認機能がOFFになっている"] };
+  }
+  const member = DATA.members.find((m) => m.id === memberId);
+  const reasons = [];
+
+  const daysBefore = Math.round((new Date(requestDateStr) - new Date(submittedDateStr)) / 86400000);
+  if (daysBefore < settings.min_days_before) {
+    reasons.push(`申請期限(${settings.min_days_before}日前まで)を満たしていない(実際: ${daysBefore}日前)`);
+  }
+
+  const weekKey = getISOWeekKey(requestDateStr);
+  const teamHours = weeklyHoursForTeam(member.team, weekKey);
+  if (teamHours > 40) {
+    const teamNames = DATA.members
+      .filter((m) => m.team === member.team)
+      .map((m) => m.name)
+      .join("、");
+    reasons.push(`週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(${teamNames})`);
+  }
+
+  const headcount = teamCapableHeadcount(member.team);
+  const residual = headcount - (member.capable ? 1 : 0);
+  if (residual < settings.min_backup_headcount) {
+    reasons.push(`承認後にチームに残る対応可能人数が${residual}人(基準${settings.min_backup_headcount}人)を下回る`);
+  }
+
+  const ngPartner = checkNgPairPartner(memberId);
+  if (ngPartner) {
+    reasons.push(`${ngPartner}とのNGペア調整が絡むため当事者間の確認が必要`);
+  }
+
+  const autoApproved = reasons.length === 0;
+  if (autoApproved) {
+    reasons.push("申請期限・週40時間・チームの残人数・NGペアのいずれも問題なし → 自動承認");
+  }
+  return { autoApproved, reasons, residual };
+}
+
+function healthColor(score) {
+  if (score >= 80) return "#34d399"; // emerald-400
+  if (score >= 60) return "#fbbf24"; // amber-400
+  return "#f87171"; // red-400
+}
+
+function HealthGauge({ value }) {
+  const radius = 52;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - value / 100);
+  const color = healthColor(value);
+  return (
+    <div className="relative w-32 h-32 shrink-0">
+      <svg width="128" height="128" viewBox="0 0 128 128">
+        <circle cx="64" cy="64" r={radius} strokeWidth="10" stroke="#1e293b" fill="none" />
+        <circle
+          cx="64"
+          cy="64"
+          r={radius}
+          strokeWidth="10"
+          stroke={color}
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform="rotate(-90 64 64)"
+          style={{ transition: "stroke-dashoffset 0.6s ease" }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="font-mono text-2xl font-semibold text-slate-100">{value.toFixed(1)}</span>
+        <span className="text-[10px] tracking-widest text-slate-500 uppercase">Health</span>
+      </div>
+    </div>
+  );
+}
+
+function MetricBar({ label, value }) {
+  const color = healthColor(value);
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1">
+        <span className="text-xs text-slate-400 tracking-wide">{label}</span>
+        <span className="font-mono text-sm text-slate-200">{value.toFixed(1)}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${value}%`, backgroundColor: color }} />
+      </div>
+    </div>
+  );
+}
+
+function MonthCalendar({ memberId, onPickDate }) {
+  const cells = useMemo(() => {
+    const days = DATA.team_shifts_by_date.map((d) => d.date);
+    const firstDow = new Date(days[0] + "T00:00:00Z").getUTCDay(); // 0=Sun
+    const blanks = Array.from({ length: firstDow }, () => null);
+    return [...blanks, ...days];
+  }, []);
+
+  return (
+    <div>
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {["日", "月", "火", "水", "木", "金", "土"].map((w) => (
+          <div key={w} className="text-center text-[10px] text-slate-500 tracking-widest">
+            {w}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((dateStr, i) => {
+          if (!dateStr) return <div key={`b${i}`} />;
+          const shift = shiftFor(memberId, dateStr);
+          const meta = SHIFT_META[shift] || {};
+          const dayNum = parseInt(dateStr.slice(-2), 10);
+          return (
+            <button
+              key={dateStr}
+              onClick={() => onPickDate(dateStr)}
+              className={`aspect-square rounded-md border text-left p-1 flex flex-col justify-between hover:brightness-125 transition ${meta.chip || "bg-slate-800 border-slate-700"}`}
+            >
+              <span className="text-[10px] font-mono text-slate-300">{dayNum}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${meta.dot || "bg-slate-500"}`} />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Legend() {
+  return (
+    <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
+      {Object.entries(SHIFT_META).map(([label, meta]) => (
+        <div key={label} className="flex items-center gap-1.5">
+          <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
+          <span>
+            {label}
+            <span className="text-slate-600">・{meta.sub}</span>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ShiftDashboard() {
+  const [view, setView] = useState("member"); // "member" | "admin"
+  const [memberId, setMemberId] = useState(DATA.members[0].id);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [formDate, setFormDate] = useState("2026-08-10");
+  const [formReason, setFormReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [expandedGap, setExpandedGap] = useState(null);
+  const [autoApprovalEnabled, setAutoApprovalEnabled] = useState(AUTO_APPROVAL.settings.enabled);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await storage.get(STORAGE_KEY, true);
+        setRequests(res ? JSON.parse(res.value) : []);
+      } catch (e) {
+        // 初回アクセス: 既存の希望休データを申請の初期状態としてシードする
+        const seed = [];
+        Object.entries(DATA.requested_days_off).forEach(([mid, dates]) => {
+          dates.forEach((date) => {
+            const preComputed = AUTO_APPROVAL.results.find((r) => r.member_id === mid && r.date === date);
+            const autoApproved = preComputed ? preComputed.auto_approved : false;
+            const reasons = preComputed ? preComputed.reasons : [];
+            seed.push({
+              id: `${mid}-${date}-seed`,
+              member_id: mid,
+              date,
+              reason: "(初期データ)",
+              status: autoApproved ? "approved" : "pending",
+              auto_approved: autoApproved,
+              auto_reasons: reasons,
+              created_at: new Date().toISOString(),
+            });
+          });
+        });
+        try {
+          await storage.set(STORAGE_KEY, JSON.stringify(seed), true);
+        } catch (e2) {
+          console.error("初期データの保存に失敗しました", e2);
+        }
+        setRequests(seed);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  async function persist(next) {
+    setRequests(next);
+    try {
+      const result = await storage.set(STORAGE_KEY, JSON.stringify(next), true);
+      if (!result) console.error("保存に失敗しました(結果なし)");
+    } catch (e) {
+      console.error("保存に失敗しました", e);
+    }
+  }
+
+  async function submitRequest() {
+    if (!formDate) return;
+    setSaving(true);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const { autoApproved, reasons } = evaluateAutoApproval(memberId, formDate, todayStr, autoApprovalEnabled);
+    const newReq = {
+      id: `${memberId}-${formDate}-${Date.now()}`,
+      member_id: memberId,
+      date: formDate,
+      reason: formReason.trim(),
+      status: autoApproved ? "approved" : "pending",
+      auto_approved: autoApproved,
+      auto_reasons: reasons,
+      created_at: new Date().toISOString(),
+    };
+    await persist([...requests, newReq]);
+    setFormReason("");
+    setSaving(false);
+  }
+
+  async function updateStatus(id, status) {
+    await persist(requests.map((r) => (r.id === id ? { ...r, status } : r)));
+  }
+
+  const membersById = useMemo(() => Object.fromEntries(DATA.members.map((m) => [m.id, m])), []);
+  const currentMember = membersById[memberId];
+  const myRequests = requests.filter((r) => r.member_id === memberId).sort((a, b) => a.date.localeCompare(b.date));
+
+  const actionableRequests = requests
+    .filter((r) => r.status === "pending" && shiftFor(r.member_id, r.date) !== "休み")
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const resolvedRequests = requests
+    .filter((r) => r.status !== "pending")
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+      <header className="border-b border-slate-800 px-5 py-4 flex items-center justify-between sticky top-0 bg-slate-950/95 backdrop-blur z-10">
+        <div>
+          <div className="text-[11px] tracking-[0.2em] text-slate-500 uppercase">A2E Works</div>
+          <div className="font-bold tracking-tight text-lg">シフト改善支援ダッシュボード</div>
+        </div>
+        <div className="flex rounded-lg border border-slate-800 overflow-hidden text-sm">
+          <button
+            onClick={() => setView("member")}
+            className={`px-3 py-1.5 flex items-center gap-1.5 transition ${
+              view === "member" ? "bg-slate-100 text-slate-900" : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <UserCircle2 size={16} /> メンバー
+          </button>
+          <button
+            onClick={() => setView("admin")}
+            className={`px-3 py-1.5 flex items-center gap-1.5 transition relative ${
+              view === "admin" ? "bg-slate-100 text-slate-900" : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <ShieldCheck size={16} /> 管理者
+            {actionableRequests.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center">
+                {actionableRequests.length}
+              </span>
+            )}
+          </button>
+        </div>
+      </header>
+
+      {loading ? (
+        <div className="p-8 text-slate-500 text-sm">読み込み中...</div>
+      ) : view === "member" ? (
+        <main className="p-5 max-w-md mx-auto space-y-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center gap-4">
+            <div className="shrink-0">
+              <div className="font-mono text-3xl font-bold" style={{ color: healthColor(DATA.health_overall) }}>
+                {DATA.health_overall.toFixed(1)}
+              </div>
+              <div className="text-[10px] text-slate-500 tracking-widest uppercase text-center">健全度</div>
+            </div>
+            <div className="text-xs text-slate-400 leading-relaxed">
+              <span className="text-slate-200 font-medium">
+                {DATA.health_overall >= 80
+                  ? "現在は余裕があります。"
+                  : DATA.health_overall >= 60
+                  ? "現在はやや余裕がない状態です。"
+                  : "現在は厳しい状態です。"}
+              </span>
+              希望休は通常どおり申請できます。教育・資格取得が進むほど、
+              この数字が上がり、希望休はさらに通りやすくなります。
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-slate-500 tracking-wide">あなた(デモ用の選択)</label>
+            <select
+              value={memberId}
+              onChange={(e) => setMemberId(e.target.value)}
+              className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm"
+            >
+              {DATA.members.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}({m.role} / チーム{m.team})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-200">
+              <CalendarDays size={16} /> 2026年8月のシフト
+            </div>
+            <MonthCalendar
+              memberId={memberId}
+              onPickDate={(d) => {
+                setFormDate(d);
+              }}
+            />
+            <div className="mt-3">
+              <Legend />
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+            <div className="text-sm font-semibold text-slate-200">希望休を申請する</div>
+            <input
+              type="date"
+              min="2026-08-01"
+              max="2026-08-31"
+              value={formDate}
+              onChange={(e) => setFormDate(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm"
+            />
+            <input
+              type="text"
+              placeholder="理由(任意)"
+              value={formReason}
+              onChange={(e) => setFormReason(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm placeholder:text-slate-600"
+            />
+            <button
+              onClick={submitRequest}
+              disabled={saving}
+              className="w-full bg-slate-100 text-slate-900 font-medium rounded-lg py-2 text-sm hover:bg-white transition disabled:opacity-50"
+            >
+              {saving ? "送信中..." : "申請する"}
+            </button>
+            <p className="text-[11px] text-slate-500">
+              申請は管理者ビューに即時反映されます。承認/却下されるとここに結果が表示されます。
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-slate-200">あなたの申請状況</div>
+            {myRequests.length === 0 && <div className="text-xs text-slate-600">申請はまだありません。</div>}
+            {myRequests.map((r) => {
+              const status = STATUS_META[r.status];
+              const StatusIcon = status.Icon;
+              return (
+                <div key={r.id} className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-mono text-slate-200">{r.date}</div>
+                      {r.reason && <div className="text-xs text-slate-500">{r.reason}</div>}
+                    </div>
+                    <span className={`text-[11px] px-2 py-1 rounded-full border flex items-center gap-1 ${status.cls}`}>
+                      <StatusIcon size={12} /> {status.label}
+                      {r.auto_approved && "(自動)"}
+                    </span>
+                  </div>
+                  {r.auto_reasons && r.auto_reasons.length > 0 && (
+                    <div className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">
+                      {r.auto_reasons.join(" / ")}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </main>
+      ) : (
+        <main className="p-5 max-w-2xl mx-auto space-y-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-center gap-5">
+            <HealthGauge value={DATA.health_overall} />
+            <div className="flex-1 space-y-3">
+              <MetricBar label="教育達成率" value={DATA.health["教育達成率"]} />
+              <MetricBar label="属人化耐性" value={DATA.health["属人化耐性"]} />
+              <MetricBar label="資格充足率" value={DATA.health["資格充足率"]} />
+              <MetricBar label="バックアップ率" value={DATA.health["バックアップ率"]} />
+              <MetricBar label="変更耐性" value={DATA.health["変更耐性"]} />
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-semibold text-slate-200">希望休の自動承認機能</div>
+              <div className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                有効にすると、申請期限({AUTO_APPROVAL.settings.min_days_before}日前まで)・週40時間・
+                チームの残人数・NGペアの条件をすべて満たす希望休は、承認なしで自動的に通ります。
+              </div>
+            </div>
+            <button
+              onClick={() => setAutoApprovalEnabled((v) => !v)}
+              className={`shrink-0 w-14 h-8 rounded-full border transition relative ${
+                autoApprovalEnabled ? "bg-emerald-500/30 border-emerald-500/60" : "bg-slate-800 border-slate-700"
+              }`}
+            >
+              <span
+                className={`absolute top-1 w-6 h-6 rounded-full transition-transform ${
+                  autoApprovalEnabled ? "translate-x-7 bg-emerald-400" : "translate-x-1 bg-slate-500"
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-200">
+              <Moon size={16} className="text-indigo-400" /> 週40時間の労働時間チェック(健全度と無関係の法令チェック)
+            </div>
+            <div className="text-xs text-slate-500 leading-relaxed">
+              自動承認は、この週40時間チェックに違反しているチームがあれば、健全度が高くても実行されません。
+              現在のデモデータでは、夜勤を含むローテーションの前提上、複数チームで違反が発生しています
+              (実際の現場では「1ヶ月単位の変形労働時間制」等で運用されることが多く、単純な週単位チェックとは異なる場合があります)。
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-200">
+              <AlertTriangle size={16} className="text-amber-400" /> 対応が必要な希望休(
+              {actionableRequests.length}件)
+            </div>
+            {actionableRequests.length === 0 && (
+              <div className="text-xs text-slate-600">現在、対応が必要な希望休はありません。</div>
+            )}
+            <div className="space-y-2">
+              {actionableRequests.map((r) => {
+                const member = membersById[r.member_id];
+                const shift = shiftFor(r.member_id, r.date);
+                const meta = SHIFT_META[shift] || {};
+                return (
+                  <div key={r.id} className="border border-slate-800 rounded-lg p-3 bg-slate-950/50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-slate-200">
+                          {member?.name}
+                          <span className="text-slate-500"> / {r.date}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full border ${meta.chip}`}>
+                            割当中: {shift}
+                          </span>
+                        </div>
+                        {r.reason && <div className="text-xs text-slate-500 mt-1">理由: {r.reason}</div>}
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => updateStatus(r.id, "approved")}
+                          className="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/25 transition"
+                        >
+                          承認
+                        </button>
+                        <button
+                          onClick={() => updateStatus(r.id, "rejected")}
+                          className="text-xs px-3 py-1.5 rounded-lg bg-red-500/15 text-red-300 border border-red-500/40 hover:bg-red-500/25 transition"
+                        >
+                          却下
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-600 mt-3">
+              承認後の代替要員の調整は、現時点では管理者が手動で行う想定です(自動再配置はV2以降で検討)。
+            </p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-200">
+              <Moon size={16} className="text-indigo-400" /> 夜勤回数の役職別上限オーバー
+            </div>
+            <div className="space-y-1.5">
+              {DATA.night_overages.map((o, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-300">
+                    {o.member} <span className="text-slate-600">({o.role})</span>
+                  </span>
+                  <span className="font-mono text-red-300">
+                    {o.scheduled_nights}回 / 上限{o.limit}回
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-200">
+              <TrendingUp size={16} className="text-emerald-400" /> 未来シミュレーション(現ペース)
+            </div>
+            <div className="flex justify-between gap-2 mb-3">
+              {FUTURE_DATA.projection.map((p) => (
+                <div key={p.month} className="flex-1 bg-slate-950/60 border border-slate-800 rounded-lg p-2 text-center">
+                  <div className="text-[10px] text-slate-500">{p.month === 0 ? "現在" : `${p.month}ヶ月後`}</div>
+                  <div className="font-mono text-lg text-slate-100">{p.overall}</div>
+                  <div className="text-[10px] text-slate-600">教育{p.education}</div>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-slate-500">
+              6ヶ月以降スコアが頭打ちになっています。教育担当が同乗している早番Aでしか教育は進まないため、
+              教育担当が不在のチーム・設備では実績が積み上がりません。
+            </p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1 text-sm font-semibold text-slate-200">
+              <Wrench size={16} className="text-amber-400" /> 頭打ち箇所と対応案
+            </div>
+            <p className="text-xs text-slate-500 mb-3">
+              教育担当が不在の組み合わせ: <span className="font-mono text-slate-300">{FUTURE_DATA.gap_count}件</span>
+              (チーム×設備)。ただし1人が同じチーム内の複数設備を兼任できるため、実際に昇格が必要な人数は
+              <span className="font-mono text-emerald-300"> {FUTURE_DATA.people_needed}人</span>。
+            </p>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {FUTURE_DATA.people_breakdown.map((p) => (
+                <span key={p.name} className="text-[11px] px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                  {p.name}({p.covers.length}件)
+                </span>
+              ))}
+            </div>
+            <div className="space-y-1.5">
+              {FUTURE_DATA.gaps_with_options.map((g, i) => {
+                const key = `${g.team}-${g.equipment}`;
+                const isOpen = expandedGap === key;
+                return (
+                  <div key={key} className="border border-slate-800 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setExpandedGap(isOpen ? null : key)}
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-300 hover:bg-slate-800/50 transition"
+                    >
+                      <span>
+                        チーム{g.team} / {g.equipment}
+                      </span>
+                      {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+                    {isOpen && (
+                      <div className="px-3 pb-3 space-y-2 text-xs">
+                        <div className="bg-slate-950/50 rounded-lg p-2">
+                          <div className="text-emerald-300 font-medium mb-0.5">案1: 内部昇格</div>
+                          <div className="text-slate-400">{g.internal}</div>
+                        </div>
+                        <div className="bg-slate-950/50 rounded-lg p-2">
+                          <div className="text-cyan-300 font-medium mb-0.5">案2: 他チームからの応援</div>
+                          <div className="text-slate-400">{g.support}</div>
+                        </div>
+                        <div className="bg-slate-950/50 rounded-lg p-2">
+                          <div className="text-violet-300 font-medium mb-0.5">案3: 常駐化+ローテーション制</div>
+                          <div className="text-slate-400">{g.rotation}</div>
+                        </div>
+                        <div className="bg-slate-950/50 rounded-lg p-2">
+                          <div className="text-amber-300 font-medium mb-0.5">案4: チーム編成の見直し(異動)</div>
+                          <div className="text-slate-400">{g.reassignment}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {resolvedRequests.length > 0 && (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+              <div className="text-sm font-semibold text-slate-200 mb-3">対応済みの希望休</div>
+              <div className="space-y-1.5">
+                {resolvedRequests.map((r) => {
+                  const member = membersById[r.member_id];
+                  const status = STATUS_META[r.status];
+                  const StatusIcon = status.Icon;
+                  return (
+                    <div key={r.id} className="flex items-center justify-between text-sm">
+                      <span className="text-slate-400">
+                        {member?.name} / {r.date}
+                      </span>
+                      <span className={`text-[11px] px-2 py-1 rounded-full border flex items-center gap-1 ${status.cls}`}>
+                        <StatusIcon size={12} /> {status.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </main>
+      )}
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<ShiftDashboard />);
+</script>
+</body>
+</html>

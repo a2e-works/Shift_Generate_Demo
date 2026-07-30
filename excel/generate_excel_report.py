@@ -82,6 +82,19 @@ def shift_for_team(day_index: int, team: str) -> str:
     return ROTATION_CYCLE[(day_index + TEAM_OFFSETS[team]) % 5]
 
 
+def _est_lines(text, col_width):
+    """列幅とテキスト量から、折り返し後の行数を概算する(日本語は1文字≒2ユニット幅として計算)。"""
+    if not text:
+        return 1
+    capacity = max(4, col_width / 2.0)
+    return max(1, -(-len(text) // int(capacity)))
+
+
+def _fit_row_height(ws, row, texts_and_widths, base=16, pad=8):
+    max_lines = max(_est_lines(t, w) for t, w in texts_and_widths) if texts_and_widths else 1
+    ws.row_dimensions[row].height = base * max_lines + pad
+
+
 def build_workbook():
     members = load_json("members.json")
     constraints = load_json("constraints.json")
@@ -617,11 +630,11 @@ def build_workbook():
     gap_report = instructor_gap_report(member_objs, roadmap)
     need = distinct_promotion_need(member_objs, gap_report["gaps"])
 
-    ws_gaps.column_dimensions["A"].width = 26
-    ws_gaps.column_dimensions["B"].width = 40
-    ws_gaps.column_dimensions["C"].width = 30
-    ws_gaps.column_dimensions["D"].width = 55
-    ws_gaps.column_dimensions["E"].width = 55
+    ws_gaps.column_dimensions["A"].width = 20
+    ws_gaps.column_dimensions["B"].width = 34
+    ws_gaps.column_dimensions["C"].width = 34
+    ws_gaps.column_dimensions["D"].width = 34
+    ws_gaps.column_dimensions["E"].width = 34
 
     ws_gaps["A1"] = "教育担当が不在で頭打ちになっている箇所と対応案"
     ws_gaps["A1"].font = TITLE_FONT
@@ -641,11 +654,15 @@ def build_workbook():
         cell = ws_gaps.cell(row=summary_header_row, column=c, value=h)
         cell.font = HEADER_FONT
         cell.fill = HEADER_FILL
+        cell.alignment = Alignment(wrap_text=True, vertical="center")
     for i, b in enumerate(need["breakdown"]):
         r = summary_header_row + 1 + i
-        ws_gaps.cell(row=r, column=1, value=b["candidate"])
-        ws_gaps.cell(row=r, column=2, value=", ".join(b["covers"]))
-        ws_gaps.cell(row=r, column=3, value=len(b["covers"]))
+        covers_text = ", ".join(b["covers"])
+        ws_gaps.cell(row=r, column=1, value=b["candidate"]).alignment = Alignment(vertical="top")
+        cover_cell = ws_gaps.cell(row=r, column=2, value=covers_text)
+        cover_cell.alignment = Alignment(wrap_text=True, vertical="top")
+        ws_gaps.cell(row=r, column=3, value=len(b["covers"])).alignment = Alignment(vertical="top")
+        _fit_row_height(ws_gaps, r, [(covers_text, 34)], base=15, pad=8)
 
     detail_start = summary_header_row + 1 + len(need["breakdown"]) + 2
     ws_gaps.cell(row=detail_start, column=1, value="箇所ごとの対応案(4案)").font = BOLD
@@ -654,17 +671,24 @@ def build_workbook():
         cell = ws_gaps.cell(row=header_row2, column=c, value=h)
         cell.font = HEADER_FONT
         cell.fill = HEADER_FILL
+        cell.alignment = Alignment(wrap_text=True, vertical="center")
+    ws_gaps.row_dimensions[header_row2].height = 30
 
     r = header_row2 + 1
     for gap in gap_report["gaps"]:
         resolution = gap_resolution_options(member_objs, gap)
         opt_by_name = {o["案"]: o for o in resolution["options"]}
-        ws_gaps.cell(row=r, column=1, value=f"チーム{gap['team']} / {gap['equipment']}")
+        label_cell = ws_gaps.cell(row=r, column=1, value=f"チーム{gap['team']} / {gap['equipment']}")
+        label_cell.alignment = Alignment(wrap_text=True, vertical="top")
+        label_cell.font = BOLD
+        row_texts = [(f"チーム{gap['team']} / {gap['equipment']}", 20)]
         for col, key in zip((2, 3, 4, 5), ("内部昇格", "他チームからの応援", "常駐化+ローテーション制", "チーム編成の見直し(異動)")):
             opt = opt_by_name.get(key)
             text = opt["内容"] if opt else "(該当候補なし)"
             cell = ws_gaps.cell(row=r, column=col, value=text)
             cell.alignment = Alignment(wrap_text=True, vertical="top")
+            row_texts.append((text, 34))
+        _fit_row_height(ws_gaps, r, row_texts, base=15, pad=12)
         r += 1
 
     note_row = r + 1
@@ -685,17 +709,6 @@ def build_workbook():
     ws_guide.column_dimensions["C"].width = 48
     ws_guide.column_dimensions["D"].width = 44
 
-    def _est_lines(text, col_width):
-        """列幅とテキスト量から、折り返し後の行数を概算する(日本語は1文字≒2ユニット幅として計算)。"""
-        if not text:
-            return 1
-        capacity = max(4, col_width / 2.0)
-        return max(1, -(-len(text) // int(capacity)))
-
-    def _fit_row_height(row, texts_and_widths, base=16, pad=8):
-        max_lines = max(_est_lines(t, w) for t, w in texts_and_widths) if texts_and_widths else 1
-        ws_guide.row_dimensions[row].height = base * max_lines + pad
-
     ws_guide["A1"] = "このレポートの読み方(6ステップ)"
     ws_guide["A1"].font = TITLE_FONT
     ws_guide.merge_cells("A1:D1")
@@ -712,7 +725,7 @@ def build_workbook():
         title_cell.font = Font(name=FONT_NAME, bold=True, size=12)
         title_cell.alignment = Alignment(vertical="center", wrap_text=True)
         ws_guide.merge_cells(start_row=row, start_column=2, end_row=row, end_column=3)
-        _fit_row_height(row, [(title, 24 + 46)], base=18, pad=10)
+        _fit_row_height(ws_guide, row, [(title, 24 + 46)], base=18, pad=10)
 
     def detail_line(row, label, text):
         label_cell = ws_guide.cell(row=row, column=2, value=label)
@@ -720,7 +733,7 @@ def build_workbook():
         label_cell.alignment = Alignment(vertical="top", wrap_text=True)
         cell = ws_guide.cell(row=row, column=3, value=text)
         cell.alignment = Alignment(wrap_text=True, vertical="top")
-        _fit_row_height(row, [(label, 22), (text, 48)])
+        _fit_row_height(ws_guide, row, [(label, 22), (text, 48)])
         return cell
 
     r = 4
@@ -783,7 +796,7 @@ def build_workbook():
         th_cell = ws_guide.cell(row=r, column=4, value=threshold)
         th_cell.alignment = Alignment(wrap_text=True, vertical="top")
         th_cell.font = Font(name=FONT_NAME, size=9)
-        _fit_row_height(r, [(label, 22), (text, 48), (threshold, 44)], base=15, pad=10)
+        _fit_row_height(ws_guide, r, [(label, 22), (text, 48), (threshold, 44)], base=15, pad=10)
         r += 1
     detail_line(r, "このデモでは", "教育達成率41.3・資格充足率50.0が低い → 上記の1番目・3番目のパターンに近い")
     r += 2
