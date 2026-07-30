@@ -33,16 +33,16 @@ const DATA = {"members": [{"id": "M01", "name": "佐藤 一郎", "team": "A", "r
 
 const FUTURE_DATA = {"projection": [{"month": 0, "overall": 71.6, "education": 41.2}, {"month": 3, "overall": 72.2, "education": 52.9}, {"month": 6, "overall": 73.0, "education": 56.7}, {"month": 12, "overall": 73.0, "education": 56.7}], "gap_count": 13, "people_needed": 5, "people_breakdown": [{"name": "佐藤 一郎", "covers": ["A/消防設備"]}, {"name": "鈴木 次郎", "covers": ["B/空調設備", "B/監視盤"]}, {"name": "高橋 三郎", "covers": ["C/受変電設備", "C/消防設備"]}, {"name": "加藤 大輔", "covers": ["D/受変電設備", "D/空調設備", "D/消防設備", "D/監視盤"]}, {"name": "吉田 匠", "covers": ["E/受変電設備", "E/空調設備", "E/消防設備", "E/監視盤"]}], "gaps_with_options": [{"team": "A", "equipment": "消防設備", "internal": "佐藤 一郎(現在 単独)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームAの早番Aへ応援に回す", "rotation": "佐藤 一郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "鈴木 次郎(チームB)を チームA へ恒久的に異動する。異動元(チームB)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "B", "equipment": "空調設備", "internal": "鈴木 次郎(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームBの早番Aへ応援に回す", "rotation": "鈴木 次郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームB へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "B", "equipment": "監視盤", "internal": "鈴木 次郎(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームBの早番Aへ応援に回す", "rotation": "鈴木 次郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームB へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "C", "equipment": "受変電設備", "internal": "高橋 三郎(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、鈴木 次郎(チームB) を臨時にチームCの早番Aへ応援に回す", "rotation": "高橋 三郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームC へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "C", "equipment": "消防設備", "internal": "高橋 三郎(現在 単独)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームCの早番Aへ応援に回す", "rotation": "高橋 三郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "鈴木 次郎(チームB)を チームC へ恒久的に異動する。異動元(チームB)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "D", "equipment": "受変電設備", "internal": "加藤 大輔(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、鈴木 次郎(チームB) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームD へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "D", "equipment": "空調設備", "internal": "加藤 大輔(現在 教育担当補助)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームD へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "D", "equipment": "消防設備", "internal": "加藤 大輔(現在 単独)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "鈴木 次郎(チームB)を チームD へ恒久的に異動する。異動元(チームB)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "D", "equipment": "監視盤", "internal": "加藤 大輔(現在 教育担当補助)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームD へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "E", "equipment": "受変電設備", "internal": "吉田 匠(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、鈴木 次郎(チームB) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームE へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "E", "equipment": "空調設備", "internal": "吉田 匠(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームE へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "E", "equipment": "消防設備", "internal": "吉田 匠(現在 教育担当補助)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "鈴木 次郎(チームB)を チームE へ恒久的に異動する。異動元(チームB)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "E", "equipment": "監視盤", "internal": "吉田 匠(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームE へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}]};
 
-const AUTO_APPROVAL = {"settings": {"enabled": true, "min_days_before": 14, "min_backup_headcount": 2, "note": "管理者がこの機能自体をON/OFFできる想定。enabledをfalseにすると全件手動承認に戻る。"}, "results": [{"member_id": "M04", "date": "2026-08-10", "submitted_on": "2026-07-01", "auto_approved": true, "reasons": ["申請期限・週40時間・チームの残人数(2人)・NGペアのいずれも問題なし → 自動承認"]}, {"member_id": "M04", "date": "2026-08-11", "submitted_on": "2026-07-01", "auto_approved": true, "reasons": ["申請期限・週40時間・チームの残人数(2人)・NGペアのいずれも問題なし → 自動承認"]}, {"member_id": "M12", "date": "2026-08-20", "submitted_on": "2026-07-20", "auto_approved": false, "reasons": ["週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(鈴木 次郎、伊藤 健太、山田 悠斗)"]}, {"member_id": "M09", "date": "2026-08-15", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 10日前)", "週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(高橋 三郎、渡辺 修、小林 拓也)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}, {"member_id": "M09", "date": "2026-08-16", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 11日前)", "週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(高橋 三郎、渡辺 修、小林 拓也)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}, {"member_id": "M09", "date": "2026-08-17", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 12日前)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}]};
+const AUTO_APPROVAL = {"settings": {"enabled": true, "min_days_before": 14, "min_backup_headcount": 2, "note": "管理者がこの機能自体をON/OFFできる想定。enabledをfalseにすると全件手動承認に戻る。"}, "ng_pairs": [["M08", "M09"]], "results": [{"member_id": "M04", "date": "2026-08-10", "submitted_on": "2026-07-01", "auto_approved": true, "reasons": ["申請期限・週40時間・チームの残人数(2人)・NGペアのいずれも問題なし → 自動承認"]}, {"member_id": "M04", "date": "2026-08-11", "submitted_on": "2026-07-01", "auto_approved": true, "reasons": ["申請期限・週40時間・チームの残人数(2人)・NGペアのいずれも問題なし → 自動承認"]}, {"member_id": "M12", "date": "2026-08-20", "submitted_on": "2026-07-20", "auto_approved": false, "reasons": ["週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(鈴木 次郎、伊藤 健太、山田 悠斗)"]}, {"member_id": "M09", "date": "2026-08-15", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 10日前)", "週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(高橋 三郎、渡辺 修、小林 拓也)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}, {"member_id": "M09", "date": "2026-08-16", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 11日前)", "週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(高橋 三郎、渡辺 修、小林 拓也)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}, {"member_id": "M09", "date": "2026-08-17", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 12日前)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}]};
 
 const STORAGE_KEY = "a2e_leave_requests_v1";
 
 const SHIFT_META = {
-  "早番A": { sub: "教育投資枠", chip: "bg-violet-500/15 text-violet-300 border-violet-500/40", dot: "bg-violet-400" },
-  "早番B": { sub: "早番", chip: "bg-amber-500/15 text-amber-300 border-amber-500/40", dot: "bg-amber-400" },
-  "夜勤": { sub: "夜間対応", chip: "bg-indigo-500/15 text-indigo-300 border-indigo-500/40", dot: "bg-indigo-400" },
-  "明け": { sub: "夜勤明け", chip: "bg-zinc-500/15 text-zinc-300 border-zinc-500/40", dot: "bg-zinc-400" },
-  "休み": { sub: "休日", chip: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40", dot: "bg-emerald-400" },
+  "早番A": { abbr: "早A", sub: "教育投資枠", chip: "bg-violet-500/15 text-violet-300 border-violet-500/40", dot: "bg-violet-400" },
+  "早番B": { abbr: "早B", sub: "早番", chip: "bg-amber-500/15 text-amber-300 border-amber-500/40", dot: "bg-amber-400" },
+  "夜勤": { abbr: "夜", sub: "夜間対応", chip: "bg-indigo-500/15 text-indigo-300 border-indigo-500/40", dot: "bg-indigo-400" },
+  "明け": { abbr: "明", sub: "夜勤明け", chip: "bg-zinc-500/15 text-zinc-300 border-zinc-500/40", dot: "bg-zinc-400" },
+  "休み": { abbr: "休", sub: "休日", chip: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40", dot: "bg-emerald-400" },
 };
 
 const STATUS_META = {
@@ -86,7 +86,7 @@ function teamCapableHeadcount(team) {
 }
 
 function checkNgPairPartner(memberId) {
-  for (const pair of AUTO_APPROVAL.ng_pairs) {
+  for (const pair of AUTO_APPROVAL.ng_pairs || []) {
     if (pair.includes(memberId)) {
       const otherId = pair.find((id) => id !== memberId);
       const other = DATA.members.find((m) => m.id === otherId);
@@ -136,6 +136,18 @@ function evaluateAutoApproval(memberId, requestDateStr, submittedDateStr, enable
     reasons.push("申請期限・週40時間・チームの残人数・NGペアのいずれも問題なし → 自動承認");
   }
   return { autoApproved, reasons, residual };
+}
+
+// ---- カレンダーの各日に表示する「休みやすさ」の目安スコア(0-100) ----
+// 出勤日について、その日に休んだ場合にチームへ残る対応可能人数から簡易的に算出する。
+// 休み/明けの日は元々出勤していないため計算不要(nullを返す)。
+function dayScore(memberId, dateStr) {
+  const shift = shiftFor(memberId, dateStr);
+  if (shift === "休み" || shift === "明け" || !shift) return null;
+  const member = DATA.members.find((m) => m.id === memberId);
+  const headcount = teamCapableHeadcount(member.team);
+  const residual = headcount - (member.capable ? 1 : 0);
+  return Math.round((Math.max(0, Math.min(residual, 2)) / 2) * 100);
 }
 
 function healthColor(score) {
@@ -213,6 +225,7 @@ function MonthCalendar({ memberId, onPickDate }) {
           const shift = shiftFor(memberId, dateStr);
           const meta = SHIFT_META[shift] || {};
           const dayNum = parseInt(dateStr.slice(-2), 10);
+          const score = dayScore(memberId, dateStr);
           return (
             <button
               key={dateStr}
@@ -220,7 +233,13 @@ function MonthCalendar({ memberId, onPickDate }) {
               className={`aspect-square rounded-md border text-left p-1 flex flex-col justify-between hover:brightness-125 transition ${meta.chip || "bg-slate-800 border-slate-700"}`}
             >
               <span className="text-[10px] font-mono text-slate-300">{dayNum}</span>
-              <span className={`w-1.5 h-1.5 rounded-full ${meta.dot || "bg-slate-500"}`} />
+              <span className="text-xs font-bold text-center leading-none">{meta.abbr || "-"}</span>
+              <span
+                className="text-[9px] font-mono text-right leading-none"
+                style={score !== null ? { color: healthColor(score) } : { visibility: "hidden" }}
+              >
+                {score !== null ? score : "00"}
+              </span>
             </button>
           );
         })}
@@ -231,16 +250,21 @@ function MonthCalendar({ memberId, onPickDate }) {
 
 function Legend() {
   return (
-    <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
-      {Object.entries(SHIFT_META).map(([label, meta]) => (
-        <div key={label} className="flex items-center gap-1.5">
-          <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
-          <span>
-            {label}
-            <span className="text-slate-600">・{meta.sub}</span>
-          </span>
-        </div>
-      ))}
+    <div>
+      <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
+        {Object.entries(SHIFT_META).map(([label, meta]) => (
+          <div key={label} className="flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
+            <span>
+              {meta.abbr}
+              <span className="text-slate-600">・{meta.sub}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="text-[11px] text-slate-500 mt-1.5">
+        右下の数字は、その日に休んだ場合の「休みやすさの目安」(0〜100、高いほど休みやすい)
+      </div>
     </div>
   );
 }
@@ -306,21 +330,26 @@ export default function ShiftDashboard() {
   async function submitRequest() {
     if (!formDate) return;
     setSaving(true);
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const { autoApproved, reasons } = evaluateAutoApproval(memberId, formDate, todayStr, autoApprovalEnabled);
-    const newReq = {
-      id: `${memberId}-${formDate}-${Date.now()}`,
-      member_id: memberId,
-      date: formDate,
-      reason: formReason.trim(),
-      status: autoApproved ? "approved" : "pending",
-      auto_approved: autoApproved,
-      auto_reasons: reasons,
-      created_at: new Date().toISOString(),
-    };
-    await persist([...requests, newReq]);
-    setFormReason("");
-    setSaving(false);
+    try {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const { autoApproved, reasons } = evaluateAutoApproval(memberId, formDate, todayStr, autoApprovalEnabled);
+      const newReq = {
+        id: `${memberId}-${formDate}-${Date.now()}`,
+        member_id: memberId,
+        date: formDate,
+        reason: formReason.trim(),
+        status: autoApproved ? "approved" : "pending",
+        auto_approved: autoApproved,
+        auto_reasons: reasons,
+        created_at: new Date().toISOString(),
+      };
+      await persist([...requests, newReq]);
+      setFormReason("");
+    } catch (e) {
+      console.error("申請に失敗しました", e);
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function updateStatus(id, status) {
