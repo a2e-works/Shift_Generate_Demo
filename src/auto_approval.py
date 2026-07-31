@@ -113,25 +113,35 @@ def evaluate_auto_approval(
     if days_before < min_days:
         reasons.append(f"申請期限({min_days}日前まで)を満たしていない(実際: {days_before}日前)")
 
-    # c. 週40時間違反がその週のチーム内に無いか
-    violations = find_weekly_hour_violations(schedule, members, constraints)
-    week_of_request = _week_key(date.fromisoformat(request_date))
-    team_violation_this_week = [
-        v for v in violations if v["team"] == member.team and v["week"] == week_of_request
-    ]
-    if team_violation_this_week:
-        names = "、".join(v["member"] for v in team_violation_this_week)
-        reasons.append(f"週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要({names})")
-
-    # d. 承認後の残人数(健全度への影響)
-    backup_headcount = _team_backup_headcount(member.team, members)
-    is_capable = any(
-        _stage_index(s) >= INDEPENDENT_STAGE_INDEX for s in member.equipment_skills.values()
+    # 早番Aは通常の運行に必須な枠ではない(教育投資枠)。
+    # 休んでも運行上の穴は生じないため、c(週40時間)・d(残人数)のチェックは対象外とする。
+    requested_shift = next(
+        (day["member_shifts"].get(member_id) for day in schedule if day["date"] == request_date), None
     )
-    residual = backup_headcount - (1 if is_capable else 0)
-    min_backup = settings.get("min_backup_headcount", 2)
-    if residual < min_backup:
-        reasons.append(f"承認後にチームに残る対応可能人数が{residual}人(基準{min_backup}人)を下回る")
+    is_early_a = requested_shift == "早番A"
+
+    # c. 週40時間違反がその週のチーム内に無いか(早番Aの希望休には適用しない)
+    if not is_early_a:
+        violations = find_weekly_hour_violations(schedule, members, constraints)
+        week_of_request = _week_key(date.fromisoformat(request_date))
+        team_violation_this_week = [
+            v for v in violations if v["team"] == member.team and v["week"] == week_of_request
+        ]
+        if team_violation_this_week:
+            names = "、".join(v["member"] for v in team_violation_this_week)
+            reasons.append(f"週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要({names})")
+
+    # d. 承認後の残人数(健全度への影響、早番Aの希望休には適用しない)
+    residual = None
+    if not is_early_a:
+        backup_headcount = _team_backup_headcount(member.team, members)
+        is_capable = any(
+            _stage_index(s) >= INDEPENDENT_STAGE_INDEX for s in member.equipment_skills.values()
+        )
+        residual = backup_headcount - (1 if is_capable else 0)
+        min_backup = settings.get("min_backup_headcount", 2)
+        if residual < min_backup:
+            reasons.append(f"承認後にチームに残る対応可能人数が{residual}人(基準{min_backup}人)を下回る")
 
     # e. NGペアの相手がこの日に関わる状況ではないか(簡易チェック)
     ng_partner_reason = None
@@ -146,10 +156,13 @@ def evaluate_auto_approval(
 
     auto_approved = len(reasons) == 0
     if auto_approved:
-        reasons.append(
-            f"申請期限・週40時間・チームの残人数({residual}人)・NGペアのいずれも問題なし → 自動承認"
-        )
-    return {"auto_approved": auto_approved, "reasons": reasons, "residual_backup": residual}
+        if is_early_a:
+            reasons.append("早番A(教育投資枠)の希望休のため、運行への影響なし → 自動承認")
+        else:
+            reasons.append(
+                f"申請期限・週40時間・チームの残人数({residual}人)・NGペアのいずれも問題なし → 自動承認"
+            )
+    return {"auto_approved": auto_approved, "reasons": reasons, "residual_backup": residual, "is_early_a": is_early_a}
 
 
 def evaluate_all_requests(members: List[Member], schedule: List[dict], constraints: dict) -> List[dict]:
