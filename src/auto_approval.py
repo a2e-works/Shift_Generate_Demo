@@ -34,6 +34,7 @@ from members import Member, load_members
 from constraints import load_constraints, check_ng_pair
 from shift_schedule import generate_schedule, DEMO_START_DATE, DEMO_NUM_DAYS
 from health_score import _stage_index, INDEPENDENT_STAGE_INDEX
+from substitution import simulate_substitution
 
 
 def _week_key(d: date) -> str:
@@ -73,17 +74,6 @@ def find_weekly_hour_violations(schedule: List[dict], members: List[Member], con
                     }
                 )
     return violations
-
-
-def _team_backup_headcount(team: str, members: List[Member]) -> int:
-    """そのチームで設備を単独対応以上でこなせる人数(health_score.pyの考え方を簡略に再利用)。"""
-    count = 0
-    for m in members:
-        if m.team != team:
-            continue
-        if any(_stage_index(s) >= INDEPENDENT_STAGE_INDEX for s in m.equipment_skills.values()):
-            count += 1
-    return count
 
 
 def evaluate_auto_approval(
@@ -131,17 +121,15 @@ def evaluate_auto_approval(
             names = "、".join(v["member"] for v in team_violation_this_week)
             reasons.append(f"週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要({names})")
 
-    # d. 承認後の残人数(健全度への影響、早番Aの希望休には適用しない)
-    residual = None
+    # d. 必要人数を満たせるか(交代要員が実際に見つかるかを判定。早番Aには適用しない)
+    substitution = None
     if not is_early_a:
-        backup_headcount = _team_backup_headcount(member.team, members)
-        is_capable = any(
-            _stage_index(s) >= INDEPENDENT_STAGE_INDEX for s in member.equipment_skills.values()
-        )
-        residual = backup_headcount - (1 if is_capable else 0)
-        min_backup = settings.get("min_backup_headcount", 2)
-        if residual < min_backup:
-            reasons.append(f"承認後にチームに残る対応可能人数が{residual}人(基準{min_backup}人)を下回る")
+        substitution = simulate_substitution(request_date, member.team, member_id, members, schedule, constraints)
+        if substitution["needs_substitute"] and not substitution.get("swap_in"):
+            reasons.append(
+                f"必要人数({substitution['required_headcount']}名)を満たす交代要員が見つからない"
+                f"({substitution['message']})"
+            )
 
     # e. NGペアの相手がこの日に関わる状況ではないか(簡易チェック)
     ng_partner_reason = None
@@ -158,11 +146,19 @@ def evaluate_auto_approval(
     if auto_approved:
         if is_early_a:
             reasons.append("早番A(教育投資枠)の希望休のため、運行への影響なし → 自動承認")
-        else:
+        elif substitution and substitution.get("swap_in"):
             reasons.append(
-                f"申請期限・週40時間・チームの残人数({residual}人)・NGペアのいずれも問題なし → 自動承認"
+                f"申請期限・週40時間・NGペアは問題なし。{substitution['swap_in']}"
+                f"(チーム{substitution['swap_in_team']})が交代要員として配置可能なため → 自動承認"
             )
-    return {"auto_approved": auto_approved, "reasons": reasons, "residual_backup": residual, "is_early_a": is_early_a}
+        else:
+            reasons.append("申請期限・週40時間・必要人数・NGペアのいずれも問題なし → 自動承認")
+    return {
+        "auto_approved": auto_approved,
+        "reasons": reasons,
+        "is_early_a": is_early_a,
+        "substitution": substitution,
+    }
 
 
 def evaluate_all_requests(members: List[Member], schedule: List[dict], constraints: dict) -> List[dict]:

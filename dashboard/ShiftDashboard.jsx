@@ -33,7 +33,11 @@ const DATA = {"members": [{"id": "M01", "name": "佐藤 一郎", "team": "A", "r
 
 const FUTURE_DATA = {"projection": [{"month": 0, "overall": 71.6, "education": 41.2}, {"month": 3, "overall": 72.2, "education": 52.9}, {"month": 6, "overall": 73.0, "education": 56.7}, {"month": 12, "overall": 73.0, "education": 56.7}], "gap_count": 13, "people_needed": 5, "people_breakdown": [{"name": "佐藤 一郎", "covers": ["A/消防設備"]}, {"name": "鈴木 次郎", "covers": ["B/空調設備", "B/監視盤"]}, {"name": "高橋 三郎", "covers": ["C/受変電設備", "C/消防設備"]}, {"name": "加藤 大輔", "covers": ["D/受変電設備", "D/空調設備", "D/消防設備", "D/監視盤"]}, {"name": "吉田 匠", "covers": ["E/受変電設備", "E/空調設備", "E/消防設備", "E/監視盤"]}], "gaps_with_options": [{"team": "A", "equipment": "消防設備", "internal": "佐藤 一郎(現在 単独)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームAの早番Aへ応援に回す", "rotation": "佐藤 一郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "鈴木 次郎(チームB)を チームA へ恒久的に異動する。異動元(チームB)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "B", "equipment": "空調設備", "internal": "鈴木 次郎(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームBの早番Aへ応援に回す", "rotation": "鈴木 次郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームB へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "B", "equipment": "監視盤", "internal": "鈴木 次郎(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームBの早番Aへ応援に回す", "rotation": "鈴木 次郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームB へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "C", "equipment": "受変電設備", "internal": "高橋 三郎(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、鈴木 次郎(チームB) を臨時にチームCの早番Aへ応援に回す", "rotation": "高橋 三郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームC へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "C", "equipment": "消防設備", "internal": "高橋 三郎(現在 単独)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームCの早番Aへ応援に回す", "rotation": "高橋 三郎など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "鈴木 次郎(チームB)を チームC へ恒久的に異動する。異動元(チームB)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "D", "equipment": "受変電設備", "internal": "加藤 大輔(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、鈴木 次郎(チームB) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームD へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "D", "equipment": "空調設備", "internal": "加藤 大輔(現在 教育担当補助)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームD へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "D", "equipment": "消防設備", "internal": "加藤 大輔(現在 単独)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "鈴木 次郎(チームB)を チームD へ恒久的に異動する。異動元(チームB)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "D", "equipment": "監視盤", "internal": "加藤 大輔(現在 教育担当補助)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームDの早番Aへ応援に回す", "rotation": "加藤 大輔など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームD へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "E", "equipment": "受変電設備", "internal": "吉田 匠(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、鈴木 次郎(チームB) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームE へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "E", "equipment": "空調設備", "internal": "吉田 匠(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームE へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "E", "equipment": "消防設備", "internal": "吉田 匠(現在 教育担当補助)を教育担当に育てる", "support": "鈴木 次郎(チームB) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "鈴木 次郎(チームB)を チームE へ恒久的に異動する。異動元(チームB)には他に単独対応以上の人が残るため、教育体制は維持される"}, {"team": "E", "equipment": "監視盤", "internal": "吉田 匠(現在 単独)を教育担当に育てる", "support": "佐藤 一郎(チームA)、高橋 三郎(チームC) を臨時にチームEの早番Aへ応援に回す", "rotation": "吉田 匠など最もスキルの高いメンバーを一時的に教育専任(常日勤)にする。ただし固定化すると不公平感が出るため、対象者を数ヶ月ごとに交代するローテーション制にする", "reassignment": "佐藤 一郎(チームA)を チームE へ恒久的に異動する。異動元(チームA)には他に単独対応以上の人が残るため、教育体制は維持される"}]};
 
-const AUTO_APPROVAL = {"settings": {"enabled": true, "min_days_before": 14, "min_backup_headcount": 2, "note": "管理者がこの機能自体をON/OFFできる想定。enabledをfalseにすると全件手動承認に戻る。"}, "ng_pairs": [["M08", "M09"]], "results": [{"member_id": "M04", "date": "2026-08-10", "submitted_on": "2026-07-01", "auto_approved": true, "reasons": ["申請期限・週40時間・チームの残人数(2人)・NGペアのいずれも問題なし → 自動承認"]}, {"member_id": "M04", "date": "2026-08-11", "submitted_on": "2026-07-01", "auto_approved": true, "reasons": ["早番A(教育投資枠)の希望休のため、運行への影響なし → 自動承認"]}, {"member_id": "M12", "date": "2026-08-20", "submitted_on": "2026-07-20", "auto_approved": true, "reasons": ["早番A(教育投資枠)の希望休のため、運行への影響なし → 自動承認"]}, {"member_id": "M09", "date": "2026-08-15", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 10日前)", "週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(高橋 三郎、渡辺 修、小林 拓也)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}, {"member_id": "M09", "date": "2026-08-16", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 11日前)", "週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(高橋 三郎、渡辺 修、小林 拓也)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}, {"member_id": "M09", "date": "2026-08-17", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 12日前)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}]};
+const AUTO_APPROVAL = {"settings": {"enabled": true, "min_days_before": 14, "min_backup_headcount": 2, "note": "管理者がこの機能自体をON/OFFできる想定。enabledをfalseにすると全件手動承認に戻る。"}, "ng_pairs": [["M08", "M09"]], "results": [{"member_id": "M04", "date": "2026-08-10", "submitted_on": "2026-07-01", "auto_approved": true, "reasons": ["申請期限・週40時間・必要人数・NGペアのいずれも問題なし → 自動承認"]}, {"member_id": "M04", "date": "2026-08-11", "submitted_on": "2026-07-01", "auto_approved": true, "reasons": ["早番A(教育投資枠)の希望休のため、運行への影響なし → 自動承認"]}, {"member_id": "M12", "date": "2026-08-20", "submitted_on": "2026-07-20", "auto_approved": true, "reasons": ["早番A(教育投資枠)の希望休のため、運行への影響なし → 自動承認"]}, {"member_id": "M09", "date": "2026-08-15", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 10日前)", "週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(高橋 三郎、渡辺 修、小林 拓也)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}, {"member_id": "M09", "date": "2026-08-16", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 11日前)", "週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(高橋 三郎、渡辺 修、小林 拓也)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}, {"member_id": "M09", "date": "2026-08-17", "submitted_on": "2026-08-05", "auto_approved": false, "reasons": ["申請期限(14日前まで)を満たしていない(実際: 12日前)", "中村 陽介とのNGペア調整が絡むため当事者間の確認が必要"]}]};
+
+// シフト種別ごとの最低必要人数(チーム定員3名。早番Aは教育投資枠のため必須人数なし。
+// 早番B・夜勤はチーム全員での運行を前提とし、1名でも欠けると他チームからの交代が必要)
+const REQUIRED_HEADCOUNT = { "早番A": 0, "早番B": 3, "夜勤": 3, "明け": 0, "休み": 0 };
 
 const STORAGE_KEY = "a2e_leave_requests_v1";
 
@@ -96,6 +100,76 @@ function checkNgPairPartner(memberId) {
   return null;
 }
 
+function isNgPair(idA, idB) {
+  return (AUTO_APPROVAL.ng_pairs || []).some((pair) => pair.includes(idA) && pair.includes(idB));
+}
+
+function teamShiftOn(team, dateStr) {
+  const day = DATA.team_shifts_by_date.find((d) => d.date === dateStr);
+  return day ? day.shifts[team] : null;
+}
+
+// ---- 交代要員(振替)の提案ロジック(src/substitution.py と同じ考え方) ----
+function findSubstituteCandidates(dateStr, team, absentMemberId, maxCandidates = 3) {
+  const day = DATA.team_shifts_by_date.find((d) => d.date === dateStr);
+  if (!day) return [];
+  const teamMembersToday = DATA.members.filter((m) => m.team === team && m.id !== absentMemberId);
+
+  const candidates = [];
+  for (const m of DATA.members) {
+    if (m.team === team) continue; // 同じチームは元々出勤予定なので対象外
+    const theirShift = day.shifts[m.team];
+    if (theirShift !== "休み" && theirShift !== "明け") continue; // 元々空いている人だけが対象
+    const ngConflict = teamMembersToday.some((other) => isNgPair(m.id, other.id));
+    candidates.push({ memberId: m.id, name: m.name, team: m.team, role: m.role, capable: m.capable, ngConflict });
+  }
+  candidates.sort((a, b) => Number(a.ngConflict) - Number(b.ngConflict) || Number(b.capable) - Number(a.capable));
+  return candidates.slice(0, maxCandidates);
+}
+
+function simulateSubstitution(dateStr, team, absentMemberId) {
+  const shift = teamShiftOn(team, dateStr);
+  const required = REQUIRED_HEADCOUNT[shift] || 0;
+  const teamSizeToday = DATA.members.filter((m) => m.team === team).length;
+  const scheduledAfterLeave = teamSizeToday - 1;
+  const meets = scheduledAfterLeave >= required;
+  const absentMember = DATA.members.find((m) => m.id === absentMemberId);
+
+  if (required === 0) {
+    return { shift, required, scheduledAfterLeave, needsSubstitute: false, message: `${shift}は必要人数の定めがないため、交代なしで承認可能` };
+  }
+  if (meets) {
+    return { shift, required, scheduledAfterLeave, needsSubstitute: false, message: `チーム内に${scheduledAfterLeave}名残るため、交代なしで必要人数(${required}名)を満たす` };
+  }
+
+  const candidates = findSubstituteCandidates(dateStr, team, absentMemberId);
+  const usable = candidates.filter((c) => !c.ngConflict);
+  if (usable.length > 0) {
+    const best = usable[0];
+    const day = DATA.team_shifts_by_date.find((d) => d.date === dateStr);
+    const bestOriginalShift = day.shifts[best.team];
+    return {
+      shift,
+      required,
+      scheduledAfterLeave,
+      needsSubstitute: true,
+      swapOut: absentMember.name,
+      swapIn: best.name,
+      swapInTeam: best.team,
+      message: `${absentMember.name}(チーム${team})の代わりに、${best.name}(チーム${best.team}、この日は元々${bestOriginalShift})を配置すれば必要人数を維持できる`,
+    };
+  }
+  return {
+    shift,
+    required,
+    scheduledAfterLeave,
+    needsSubstitute: true,
+    swapOut: absentMember.name,
+    swapIn: null,
+    message: `交代できる候補が見つからない。必要人数${required}名に対し${scheduledAfterLeave}名までしか維持できない見込み`,
+  };
+}
+
 function evaluateAutoApproval(memberId, requestDateStr, submittedDateStr, enabledOverride) {
   const settings = AUTO_APPROVAL.settings;
   const enabled = enabledOverride === undefined ? settings.enabled : enabledOverride;
@@ -111,10 +185,10 @@ function evaluateAutoApproval(memberId, requestDateStr, submittedDateStr, enable
   }
 
   // 早番Aは通常の運行に必須な枠ではない(教育投資枠)。休んでも運行上の穴は生じないため、
-  // 週40時間・残人数のチェックは対象外とする。
+  // 週40時間・必要人数のチェックは対象外とする。
   const requestedShift = shiftFor(memberId, requestDateStr);
   const isEarlyA = requestedShift === "早番A";
-  let residual = null;
+  let substitution = null;
 
   if (!isEarlyA) {
     const weekKey = getISOWeekKey(requestDateStr);
@@ -127,10 +201,9 @@ function evaluateAutoApproval(memberId, requestDateStr, submittedDateStr, enable
       reasons.push(`週40時間の労働時間超過がチーム内に存在するため、健全度に関係なく手動確認が必要(${teamNames})`);
     }
 
-    const headcount = teamCapableHeadcount(member.team);
-    residual = headcount - (member.capable ? 1 : 0);
-    if (residual < settings.min_backup_headcount) {
-      reasons.push(`承認後にチームに残る対応可能人数が${residual}人(基準${settings.min_backup_headcount}人)を下回る`);
+    substitution = simulateSubstitution(requestDateStr, member.team, memberId);
+    if (substitution.needsSubstitute && !substitution.swapIn) {
+      reasons.push(`必要人数(${substitution.required}名)を満たす交代要員が見つからない(${substitution.message})`);
     }
   }
 
@@ -143,25 +216,29 @@ function evaluateAutoApproval(memberId, requestDateStr, submittedDateStr, enable
   if (autoApproved) {
     if (isEarlyA) {
       reasons.push("早番A(教育投資枠)の希望休のため、運行への影響なし → 自動承認");
+    } else if (substitution && substitution.swapIn) {
+      reasons.push(
+        `申請期限・週40時間・NGペアは問題なし。${substitution.swapIn}(チーム${substitution.swapInTeam})が交代要員として配置可能なため → 自動承認`
+      );
     } else {
-      reasons.push("申請期限・週40時間・チームの残人数・NGペアのいずれも問題なし → 自動承認");
+      reasons.push("申請期限・週40時間・必要人数・NGペアのいずれも問題なし → 自動承認");
     }
   }
-  return { autoApproved, reasons, residual, isEarlyA };
+  return { autoApproved, reasons, isEarlyA, substitution };
 }
 
 // ---- カレンダーの各日に表示する「休みやすさ」の目安スコア(0-100) ----
-// 出勤日について、その日に休んだ場合にチームへ残る対応可能人数から簡易的に算出する。
+// 早番Aは常に高スコア。早番B・夜勤は実際に交代要員が見つかるかをシミュレーションして算出する。
 // 休み/明けの日は元々出勤していないため計算不要(nullを返す)。
-// 早番A(教育投資枠)は通常運行に必須ではないため、常に高スコア(休みやすい)を返す。
 function dayScore(memberId, dateStr) {
   const shift = shiftFor(memberId, dateStr);
   if (shift === "休み" || shift === "明け" || !shift) return null;
   if (shift === "早番A") return 95;
   const member = DATA.members.find((m) => m.id === memberId);
-  const headcount = teamCapableHeadcount(member.team);
-  const residual = headcount - (member.capable ? 1 : 0);
-  return Math.round((Math.max(0, Math.min(residual, 2)) / 2) * 100);
+  const sub = simulateSubstitution(dateStr, member.team, memberId);
+  if (!sub.needsSubstitute) return 95;
+  if (sub.swapIn) return 85;
+  return Math.round((sub.scheduledAfterLeave / sub.required) * 100);
 }
 
 function healthColor(score) {

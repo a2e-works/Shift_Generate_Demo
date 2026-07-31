@@ -37,6 +37,7 @@ from members import load_members as _load_members_objs  # noqa: E402
 from education import load_roadmap  # noqa: E402
 from shift_schedule import generate_schedule, DEMO_START_DATE, DEMO_NUM_DAYS  # noqa: E402
 from auto_approval import evaluate_all_requests, find_weekly_hour_violations  # noqa: E402
+from substitution import simulate_substitution  # noqa: E402
 from future_simulation import (  # noqa: E402
     instructor_gap_report,
     distinct_promotion_need,
@@ -99,6 +100,7 @@ def build_workbook():
     members = load_json("members.json")
     constraints = load_json("constraints.json")
     member_objs = _load_members_objs()
+    member_objs_by_id = {m.member_id: m for m in member_objs}
     roadmap = load_roadmap()
     schedule_for_auto_approval = generate_schedule(member_objs, DEMO_START_DATE, DEMO_NUM_DAYS)
     auto_approval_results = {
@@ -244,7 +246,7 @@ def build_workbook():
     ws_requests["B1"].number_format = "0.0"
     ws_requests["C1"] = "=シフト健全度!C4"
 
-    req_headers = ["氏名", "チーム", "希望日", "理由", "割当中のシフト", "承認後のチーム残(単独対応可能)人数", "判定", "申請日", "自動承認可否", "自動承認/手動確認の理由"]
+    req_headers = ["氏名", "チーム", "希望日", "理由", "割当中のシフト", "承認後のチーム残(単独対応以上)人数", "判定", "申請日", "自動承認可否", "自動承認/手動確認の理由", "必要人数", "交代要員の提案"]
     header_row = 3
     for c, h in enumerate(req_headers, start=1):
         cell = ws_requests.cell(row=header_row, column=c, value=h)
@@ -257,6 +259,8 @@ def build_workbook():
     ws_requests.column_dimensions["H"].width = 14
     ws_requests.column_dimensions["I"].width = 14
     ws_requests.column_dimensions["J"].width = 55
+    ws_requests.column_dimensions["K"].width = 12
+    ws_requests.column_dimensions["L"].width = 45
 
     shift_first_col_letter = get_column_letter(date_col_start)
     shift_last_col_letter = get_column_letter(date_col_start + NUM_DAYS - 1)
@@ -300,6 +304,16 @@ def build_workbook():
                 )
                 reason_cell = ws_requests.cell(row=row, column=10, value=" / ".join(auto_result["reasons"]))
                 reason_cell.alignment = Alignment(wrap_text=True, vertical="top")
+
+            sub = simulate_substitution(d_str, member_objs_by_id[mid].team, mid, member_objs, schedule_for_auto_approval, constraints)
+            ws_requests.cell(row=row, column=11, value=sub["required_headcount"])
+            swap_text = (
+                f"{sub['swap_out']} → {sub['swap_in']}(チーム{sub['swap_in_team']})"
+                if sub.get("needs_substitute") and sub.get("swap_in")
+                else ("交代不要" if not sub.get("needs_substitute") else "交代候補なし(要検討)")
+            )
+            swap_cell = ws_requests.cell(row=row, column=12, value=swap_text)
+            swap_cell.alignment = Alignment(wrap_text=True, vertical="top")
             row += 1
 
     note_row = row + 1
