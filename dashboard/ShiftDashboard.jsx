@@ -738,59 +738,27 @@ export default function ShiftDashboard() {
 
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-1 text-sm font-semibold text-slate-200">
-              <Wrench size={16} className="text-amber-400" /> 頭打ち箇所と対応案
+              <Wrench size={16} className="text-amber-400" /> 頭打ち箇所(診断)
             </div>
             <p className="text-xs text-slate-500 mb-3">
               教育担当が不在の組み合わせ: <span className="font-mono text-slate-300">{FUTURE_DATA.gap_count}件</span>
-              (チーム×設備)。ただし1人が同じチーム内の複数設備を兼任できるため、実際に昇格が必要な人数は
-              <span className="font-mono text-emerald-300"> {FUTURE_DATA.people_needed}人</span>。
+              (チーム×設備)。このままだと、該当箇所の教育達成率はこれ以上伸びません。
             </p>
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {FUTURE_DATA.people_breakdown.map((p) => (
-                <span key={p.name} className="text-[11px] px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
-                  {p.name}({p.covers.length}件)
+            <div className="flex flex-wrap gap-1.5">
+              {FUTURE_DATA.gaps_with_options.map((g) => (
+                <span
+                  key={`${g.team}-${g.equipment}`}
+                  className="text-[11px] px-2 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30"
+                >
+                  チーム{g.team} / {g.equipment}
                 </span>
               ))}
             </div>
-            <div className="space-y-1.5">
-              {FUTURE_DATA.gaps_with_options.map((g, i) => {
-                const key = `${g.team}-${g.equipment}`;
-                const isOpen = expandedGap === key;
-                return (
-                  <div key={key} className="border border-slate-800 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => setExpandedGap(isOpen ? null : key)}
-                      className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-300 hover:bg-slate-800/50 transition"
-                    >
-                      <span>
-                        チーム{g.team} / {g.equipment}
-                      </span>
-                      {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </button>
-                    {isOpen && (
-                      <div className="px-3 pb-3 space-y-2 text-xs">
-                        <div className="bg-slate-950/50 rounded-lg p-2">
-                          <div className="text-emerald-300 font-medium mb-0.5">案1: 内部昇格</div>
-                          <div className="text-slate-400">{g.internal}</div>
-                        </div>
-                        <div className="bg-slate-950/50 rounded-lg p-2">
-                          <div className="text-cyan-300 font-medium mb-0.5">案2: 他チームからの応援</div>
-                          <div className="text-slate-400">{g.support}</div>
-                        </div>
-                        <div className="bg-slate-950/50 rounded-lg p-2">
-                          <div className="text-violet-300 font-medium mb-0.5">案3: 常駐化+ローテーション制</div>
-                          <div className="text-slate-400">{g.rotation}</div>
-                        </div>
-                        <div className="bg-slate-950/50 rounded-lg p-2">
-                          <div className="text-amber-300 font-medium mb-0.5">案4: チーム編成の見直し(異動)</div>
-                          <div className="text-slate-400">{g.reassignment}</div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <p className="text-[11px] text-slate-500 mt-3 leading-relaxed">
+              具体的にどう改善すべきか(誰をどう配置・育成するか)は、組織の事情(人間関係・
+              コスト・スピード優先度等)を踏まえて個別にご提案しています。ご興味があれば
+              お問い合わせください。
+            </p>
           </div>
 
           {resolvedRequests.length > 0 && (

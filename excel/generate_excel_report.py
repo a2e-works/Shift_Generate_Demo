@@ -15,7 +15,7 @@
   1. シフト健全度        … 総合スコア+5指標(数式)、判定基準、今月の早番A活用状況
   2. シフト表(2026年8月) … 氏名×日付のシフト表(現場のExcelそのままのイメージ)
   3. 希望休申請一覧      … 各申請について、承認した場合のチーム残人数と判定
-  4. 頭打ち箇所と対応案  … 教育担当が不在で頭打ちの箇所+3つの対応案(STEP7と連動)
+  4. 頭打ち箇所        … 教育担当が不在で頭打ちの箇所の一覧(診断のみ)
   5. メンバーデータ      … 元データ+数値化した段階(数式のソース)
   6. 段階マップ(非表示) … 段階名→数値の対応表
 """
@@ -40,9 +40,7 @@ from auto_approval import evaluate_all_requests, find_weekly_hour_violations  # 
 from substitution import simulate_substitution  # noqa: E402
 from future_simulation import (  # noqa: E402
     instructor_gap_report,
-    distinct_promotion_need,
-    gap_resolution_options,
-)
+    )
 
 BASE = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE / "data"
@@ -115,7 +113,7 @@ def build_workbook():
     ws_shift = wb.create_sheet("シフト表(2026年8月)")
     ws_requests = wb.create_sheet("希望休申請一覧")
     ws_hours = wb.create_sheet("労働時間・自動承認設定")
-    ws_gaps = wb.create_sheet("頭打ち箇所と対応案")
+    ws_gaps = wb.create_sheet("頭打ち箇所")
     ws_members = wb.create_sheet("メンバーデータ")
     ws_stagemap = wb.create_sheet("段階マップ")
 
@@ -640,81 +638,43 @@ def build_workbook():
     legal_note.alignment = Alignment(wrap_text=True, vertical="top")
     ws_hours.merge_cells(start_row=legal_note_row, start_column=1, end_row=legal_note_row + 1, end_column=4)
 
-    # ---------------- 頭打ち箇所と対応案(STEP7と連動) ----------------
+    # ---------------- 頭打ち箇所(診断のみ。具体的な対応策は非公開) ----------------
     gap_report = instructor_gap_report(member_objs, roadmap)
-    need = distinct_promotion_need(member_objs, gap_report["gaps"])
 
     ws_gaps.column_dimensions["A"].width = 20
     ws_gaps.column_dimensions["B"].width = 34
-    ws_gaps.column_dimensions["C"].width = 34
-    ws_gaps.column_dimensions["D"].width = 34
-    ws_gaps.column_dimensions["E"].width = 34
+    ws_gaps.column_dimensions["C"].width = 60
 
-    ws_gaps["A1"] = "教育担当が不在で頭打ちになっている箇所と対応案"
+    ws_gaps["A1"] = "教育担当が不在で頭打ちになっている箇所"
     ws_gaps["A1"].font = TITLE_FONT
-    ws_gaps.merge_cells("A1:E1")
+    ws_gaps.merge_cells("A1:C1")
 
     ws_gaps["A3"] = "頭打ち箇所(チーム×設備の組み合わせ数)"
     ws_gaps["A3"].font = BOLD
     ws_gaps["B3"] = gap_report["gap_count"]
-    ws_gaps["A4"] = "実際に昇格が必要な人数"
-    ws_gaps["A4"].font = BOLD
-    ws_gaps["B4"] = need["distinct_people_needed"]
-    ws_gaps["C4"] = "(1人が同じチーム内の複数設備を兼任できるため、組み合わせ数より少なくて済む)"
-    ws_gaps["C4"].font = Font(name=FONT_NAME, italic=True, size=9)
 
-    summary_header_row = 6
-    for c, h in enumerate(["候補者", "担当する(チーム/設備)", "件数"], start=1):
-        cell = ws_gaps.cell(row=summary_header_row, column=c, value=h)
+    list_header_row = 5
+    for c, h in enumerate(["チーム", "設備"], start=1):
+        cell = ws_gaps.cell(row=list_header_row, column=c, value=h)
         cell.font = HEADER_FONT
         cell.fill = HEADER_FILL
-        cell.alignment = Alignment(wrap_text=True, vertical="center")
-    for i, b in enumerate(need["breakdown"]):
-        r = summary_header_row + 1 + i
-        covers_text = ", ".join(b["covers"])
-        ws_gaps.cell(row=r, column=1, value=b["candidate"]).alignment = Alignment(vertical="top")
-        cover_cell = ws_gaps.cell(row=r, column=2, value=covers_text)
-        cover_cell.alignment = Alignment(wrap_text=True, vertical="top")
-        ws_gaps.cell(row=r, column=3, value=len(b["covers"])).alignment = Alignment(vertical="top")
-        _fit_row_height(ws_gaps, r, [(covers_text, 34)], base=15, pad=8)
+    for i, gap in enumerate(gap_report["gaps"]):
+        r = list_header_row + 1 + i
+        ws_gaps.cell(row=r, column=1, value=f"チーム{gap['team']}")
+        ws_gaps.cell(row=r, column=2, value=gap["equipment"])
 
-    detail_start = summary_header_row + 1 + len(need["breakdown"]) + 2
-    ws_gaps.cell(row=detail_start, column=1, value="箇所ごとの対応案(4案)").font = BOLD
-    header_row2 = detail_start + 1
-    for c, h in enumerate(["チーム/設備", "案1: 内部昇格", "案2: 他チームからの応援", "案3: 常駐化+ローテーション制", "案4: チーム編成の見直し(異動)"], start=1):
-        cell = ws_gaps.cell(row=header_row2, column=c, value=h)
-        cell.font = HEADER_FONT
-        cell.fill = HEADER_FILL
-        cell.alignment = Alignment(wrap_text=True, vertical="center")
-    ws_gaps.row_dimensions[header_row2].height = 30
-
-    r = header_row2 + 1
-    for gap in gap_report["gaps"]:
-        resolution = gap_resolution_options(member_objs, gap)
-        opt_by_name = {o["案"]: o for o in resolution["options"]}
-        label_cell = ws_gaps.cell(row=r, column=1, value=f"チーム{gap['team']} / {gap['equipment']}")
-        label_cell.alignment = Alignment(wrap_text=True, vertical="top")
-        label_cell.font = BOLD
-        row_texts = [(f"チーム{gap['team']} / {gap['equipment']}", 20)]
-        for col, key in zip((2, 3, 4, 5), ("内部昇格", "他チームからの応援", "常駐化+ローテーション制", "チーム編成の見直し(異動)")):
-            opt = opt_by_name.get(key)
-            text = opt["内容"] if opt else "(該当候補なし)"
-            cell = ws_gaps.cell(row=r, column=col, value=text)
-            cell.alignment = Alignment(wrap_text=True, vertical="top")
-            row_texts.append((text, 34))
-        _fit_row_height(ws_gaps, r, row_texts, base=15, pad=12)
-        r += 1
-
-    note_row = r + 1
+    note_row = list_header_row + 1 + len(gap_report["gaps"]) + 2
     note_cell = ws_gaps.cell(
         row=note_row, column=1,
         value=(
-            "「常駐化+ローテーション制」は、最もスキルの高いメンバーを一時的に教育専任(常日勤)にする案。"
-            "ただし特定の1人に固定すると不公平感が出るため、対象者を数ヶ月ごとに交代する運用を想定している。"
+            "この一覧は「どこが手薄か」の診断結果です。誰をどう配置・育成すべきかという"
+            "具体的な改善プランは、組織ごとの事情(人間関係・コスト・スピード優先度等)を踏まえて"
+            "個別にご提案しています。ご興味があればページ末尾の「お問い合わせ」からご相談ください。"
         ),
     )
     note_cell.font = Font(name=FONT_NAME, italic=True, size=9)
     note_cell.alignment = Alignment(wrap_text=True, vertical="top")
+    ws_gaps.merge_cells(start_row=note_row, start_column=1, end_row=note_row + 2, end_column=3)
     ws_gaps.row_dimensions[note_row].height = 40
 
     # ---------------- 使い方(読み方6ステップ) ----------------
@@ -726,7 +686,7 @@ def build_workbook():
     ws_guide["A1"] = "このレポートの読み方(6ステップ)"
     ws_guide["A1"].font = TITLE_FONT
     ws_guide.merge_cells("A1:D1")
-    ws_guide["A2"] = "スコアを見る → 原因を特定する → 対応案を選ぶ → 実行して効果を追う、という流れで使います。"
+    ws_guide["A2"] = "スコアを見る → 原因を特定する → 対応の要否を確認する → 実行して効果を追う、という流れで使います。"
     ws_guide["A2"].font = Font(name=FONT_NAME, italic=True, size=10)
     ws_guide.merge_cells("A2:D2")
 
@@ -817,18 +777,18 @@ def build_workbook():
 
     step_header(r, 3, "原因の場所を特定する")
     r += 1
-    detail_line(r, "教育達成率が低い場合", "「頭打ち箇所と対応案」シートで、どのチーム・設備に教育担当が不在かを確認する")
+    detail_line(r, "教育達成率が低い場合", "「頭打ち箇所」シートで、どのチーム・設備に教育担当が不在かを確認する")
     r += 1
     detail_line(r, "資格充足率が低い場合", "「シフト健全度」シートの資格充足率内訳で、どの設備の資格保有者が少ないかを確認する")
     r += 1
     detail_line(r, "このデモでは", "チームD・Eに教育担当が1人もいない。電気工事士・冷凍機械責任者の保有者が少ない")
     r += 2
 
-    step_header(r, 4, "対応案を選ぶ")
+    step_header(r, 4, "対応の要否を確認する")
     r += 1
-    detail_line(r, "見る場所", "「頭打ち箇所と対応案」シートの4案(内部昇格/他チーム応援/常駐化+ローテーション制/チーム編成の見直し)")
+    detail_line(r, "見る場所", "「頭打ち箇所」シート(どこが手薄かの診断結果)")
     r += 1
-    detail_line(r, "選び方の目安", "即効性重視なら他チームからの応援、恒久的な解決を目指すなら内部昇格やチーム編成の見直し")
+    detail_line(r, "次のアクション", "具体的な改善プラン(誰をどう配置・育成するか)は組織の事情に応じて個別にご提案しています")
     r += 2
 
     step_header(r, 5, "個別の希望休を判断する")
