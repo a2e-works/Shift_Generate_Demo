@@ -15,9 +15,10 @@
   (インターネット接続は、上のCDN読み込みのため初回のみ必要です)。
   Claudeやその他の特別な環境は一切不要です。
 
-  データの保存には、ブラウザのlocalStorage(この端末・このブラウザ内だけに保存される
-  簡易的な保存領域)を使っています。他の人とはリアルタイムには共有されません。
-  「サーバーなしでも申請〜承認のやり取りが動く」という体験を試すためのデモです。
+  データの保存は、ブラウザのメモリ上(このタブを開いている間だけ)に行っています。
+  ページを閉じたり再読み込みすると、入力したデータはすべて消去されます。
+  「サーバーなしでも申請〜承認のやり取りが動く」という体験を、実データを残さずに
+  試すためのデモです。
 -->
 <div id="root"></div>
 
@@ -41,17 +42,20 @@ const CheckCircle2 = (p) => <Icon {...p}>✅</Icon>;
 const XCircle = (p) => <Icon {...p}>❌</Icon>;
 const Clock3 = (p) => <Icon {...p}>🕐</Icon>;
 
-// ---- ブラウザのlocalStorageを使った簡易ストレージ(window.storageの代わり) ----
+// ---- メモリ上の簡易ストレージ(window.storageの代わり) ----
+// ポートフォリオ公開用のデモのため、あえてlocalStorageを使わず、
+// タブを閉じる・再読み込みすると消えるインメモリ実装にしている。
+const _memoryStore = {};
 const storage = {
   async get(key, shared) {
-    const raw = localStorage.getItem("a2e_" + key);
-    if (raw === null) {
+    const fullKey = "a2e_" + key;
+    if (!(fullKey in _memoryStore)) {
       throw new Error("not found");
     }
-    return { key, value: raw, shared };
+    return { key, value: _memoryStore[fullKey], shared };
   },
   async set(key, value, shared) {
-    localStorage.setItem("a2e_" + key, value);
+    _memoryStore["a2e_" + key] = value;
     return { key, value, shared };
   },
 };
@@ -65,9 +69,11 @@ const storage = {
  *   管理者が承認すると即座に反映される」体験を、実際に動くものとして検証する。
  *
  * 位置づけ:
- *   これは本番のスマホアプリではない。ブラウザのlocalStorage(この端末のみに保存)を使い、
+ *   これは本番のスマホアプリではない。ブラウザのメモリ上(タブを開いている間だけ)にデータを保持し、
  *   申請〜承認のやり取りがサーバー構築なしで即時反映されることを実証するプロトタイプ。
- *   実際の運用では、これに認証・Excel連携・通知などを加えて本番化する想定(V2以降)。
+ *   ポートフォリオとして不特定多数に公開するデモのため、あえて永続化はしていない
+ *   (タブを閉じる・再読み込みするとデータは消える)。
+ *   実際の運用では、これに認証・Excel連携・通知・永続化などを加えて本番化する想定(V2以降)。
  */
 
 // ---- STEP1〜5で生成したデータ(2026年8月分のデモ) ----
@@ -531,6 +537,10 @@ function ShiftDashboard() {
           </button>
         </div>
       </header>
+
+      <div className="bg-amber-500/10 border-b border-amber-500/30 px-5 py-2 text-[11px] font-mono text-amber-400 tracking-wide">
+        ⚠ DEMO ー このデモのデータは保存されません。タブを閉じる・再読み込みすると消去されます
+      </div>
 
       {loading ? (
         <div className="p-8 text-slate-500 text-sm">読み込み中...</div>
