@@ -23,9 +23,11 @@ import {
  *   管理者が承認すると即座に反映される」体験を、実際に動くものとして検証する。
  *
  * 位置づけ:
- *   これは本番のスマホアプリではない。window.storage(共有ストレージ)を使い、
+ *   これは本番のスマホアプリではない。React stateのみ(タブを開いている間だけ)にデータを保持し、
  *   申請〜承認のやり取りがサーバー構築なしで即時反映されることを実証するプロトタイプ。
- *   実際の運用では、これに認証・Excel連携・通知などを加えて本番化する想定(V2以降)。
+ *   ポートフォリオとして不特定多数に公開するデモのため、あえて永続化・共有ストレージは使っていない
+ *   (タブを閉じる・再読み込みするとデータは消え、他の利用者とも共有されない)。
+ *   実際の運用では、これに認証・Excel連携・通知・永続化などを加えて本番化する想定(V2以降)。
  */
 
 // ---- STEP1〜5で生成したデータ(2026年8月分のデモ) ----
@@ -38,8 +40,6 @@ const AUTO_APPROVAL = {"settings": {"enabled": true, "min_days_before": 14, "min
 // シフト種別ごとの最低必要人数(チーム定員3名。早番Aは教育投資枠のため必須人数なし。
 // 早番B・夜勤はチーム全員での運行を前提とし、1名でも欠けると他チームからの交代が必要)
 const REQUIRED_HEADCOUNT = { "早番A": 0, "早番B": 3, "夜勤": 3, "明け": 0, "休み": 0 };
-
-const STORAGE_KEY = "a2e_leave_requests_v1";
 
 const SHIFT_META = {
   "早番A": { abbr: "早A", sub: "教育投資枠", chip: "bg-violet-500/15 text-violet-300 border-violet-500/40", dot: "bg-violet-400" },
@@ -372,51 +372,36 @@ export default function ShiftDashboard() {
   const [autoApprovalEnabled, setAutoApprovalEnabled] = useState(AUTO_APPROVAL.settings.enabled);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await window.storage.get(STORAGE_KEY, true);
-        setRequests(res ? JSON.parse(res.value) : []);
-      } catch (e) {
-        // 初回アクセス: 既存の希望休データを申請の初期状態としてシードする
-        const seed = [];
-        Object.entries(DATA.requested_days_off).forEach(([mid, dates]) => {
-          dates.forEach((date) => {
-            const preComputed = AUTO_APPROVAL.results.find((r) => r.member_id === mid && r.date === date);
-            const autoApproved = preComputed ? preComputed.auto_approved : false;
-            const reasons = preComputed ? preComputed.reasons : [];
-            seed.push({
-              id: `${mid}-${date}-seed`,
-              member_id: mid,
-              date,
-              reason: "(初期データ)",
-              status: autoApproved ? "approved" : "pending",
-              auto_approved: autoApproved,
-              auto_reasons: reasons,
-              created_at: new Date().toISOString(),
-            });
-          });
+    // ポートフォリオ公開用のデモのため、あえて永続化・共有ストレージを使わず、
+    // 画面を開くたびにReactのstate上でだけ初期データを組み立てる
+    // (タブを閉じる・再読み込みすると消える。他の利用者とも共有されない)。
+    const seed = [];
+    Object.entries(DATA.requested_days_off).forEach(([mid, dates]) => {
+      dates.forEach((date) => {
+        const preComputed = AUTO_APPROVAL.results.find((r) => r.member_id === mid && r.date === date);
+        const autoApproved = preComputed ? preComputed.auto_approved : false;
+        const reasons = preComputed ? preComputed.reasons : [];
+        seed.push({
+          id: `${mid}-${date}-seed`,
+          member_id: mid,
+          date,
+          reason: "(初期データ)",
+          status: autoApproved ? "approved" : "pending",
+          auto_approved: autoApproved,
+          auto_reasons: reasons,
+          created_at: new Date().toISOString(),
         });
-        try {
-          await window.storage.set(STORAGE_KEY, JSON.stringify(seed), true);
-        } catch (e2) {
-          console.error("初期データの保存に失敗しました", e2);
-        }
-        setRequests(seed);
-      } finally {
-        setLoading(false);
-      }
-    })();
+      });
+    });
+    setRequests(seed);
+    setLoading(false);
   }, []);
 
-  async function persist(next) {
+  function persist(next) {
+    // メモリ上のReact stateだけを更新する(サーバー保存・共有ストレージへの書き込みは行わない)
     setRequests(next);
-    try {
-      const result = await window.storage.set(STORAGE_KEY, JSON.stringify(next), true);
-      if (!result) console.error("保存に失敗しました(結果なし)");
-    } catch (e) {
-      console.error("保存に失敗しました", e);
-    }
   }
+
 
   async function submitRequest() {
     if (!formDate) return;
@@ -489,6 +474,10 @@ export default function ShiftDashboard() {
           </button>
         </div>
       </header>
+
+      <div className="bg-amber-500/10 border-b border-amber-500/30 px-5 py-2 text-[11px] font-mono text-amber-400 tracking-wide">
+        ⚠ DEMO ー このデモのデータは保存されません。タブを閉じる・再読み込みすると消去されます
+      </div>
 
       {loading ? (
         <div className="p-8 text-slate-500 text-sm">読み込み中...</div>
